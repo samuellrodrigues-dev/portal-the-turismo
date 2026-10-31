@@ -11,3 +11,4 @@ robo-promocoes*.json
 project-sala-vip-*.json
 .env*
 *.zip
+.DS_Store
