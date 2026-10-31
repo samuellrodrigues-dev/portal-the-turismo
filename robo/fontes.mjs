@@ -9,7 +9,6 @@ export const FONTES = [
   { id: "md", nome: "Melhores Destinos", tipo: "misto", url: "https://www.melhoresdestinos.com.br/feed", site: "https://www.melhoresdestinos.com.br/" },
   { id: "catraca", nome: "Catraca Livre Viagem", tipo: "passagens", url: "https://catracalivre.com.br/viagem-livre/feed/", site: "https://catracalivre.com.br/viagem-livre/" },
   { id: "vt", nome: "Viagem e Turismo", tipo: "passagens", url: "https://viagemeturismo.abril.com.br/feed/", site: "https://viagemeturismo.abril.com.br/" },
-  { id: "voopter", nome: "Voopter", tipo: "passagens", url: "https://www.voopter.com.br/blog/feed/", site: "https://www.voopter.com.br/blog/" },
   { id: "farejador", nome: "Farejador de Milhas", tipo: "misto", url: "https://farejadordemilhas.com.br/feed/", site: "https://farejadordemilhas.com.br/" },
 
   // ─── blogs de milhas e pontos ───
@@ -17,15 +16,17 @@ export const FONTES = [
   { id: "ppv", nome: "Pontos pra Voar", tipo: "milhas", url: "https://pontospravoar.com/feed/", site: "https://pontospravoar.com/" },
   { id: "melhorescartoes", nome: "Melhores Cartões", tipo: "milhas", url: "https://www.melhorescartoes.com.br/feed", site: "https://www.melhorescartoes.com.br/" },
   { id: "cartoesme", nome: "Cartões de Crédito.me", tipo: "milhas", url: "https://www.cartoesdecredito.me/feed/", site: "https://www.cartoesdecredito.me/" },
-  { id: "meumilhao", nome: "Meu Milhão de Milhas", tipo: "milhas", url: "https://meumilhaodemilhas.com/feed/", site: "https://meumilhaodemilhas.com/" },
-  { id: "viajanamilha", nome: "Viaja na Milha", tipo: "milhas", url: "https://viajanamilha.com.br/feed/", site: "https://viajanamilha.com.br/" },
   { id: "flipmilhas", nome: "Flip Milhas", tipo: "milhas", url: "https://flipmilhas.com/blog/feed/", site: "https://flipmilhas.com/blog/" },
 
-  // ─── notícias do setor (só entra promoção ou Teresina) ───
-  { id: "aeroin", nome: "AEROIN", tipo: "noticias", url: "https://aeroin.net/feed/", site: "https://aeroin.net/" },
-  { id: "aeroflap", nome: "AEROFLAP", tipo: "noticias", url: "https://www.aeroflap.com.br/feed/", site: "https://www.aeroflap.com.br/" },
-  { id: "mercado", nome: "Mercado & Eventos", tipo: "noticias", url: "https://www.mercadoeeventos.com.br/feed/", site: "https://www.mercadoeeventos.com.br/" },
-  { id: "panrotas", nome: "PANROTAS", tipo: "noticias", url: "https://www.panrotas.com.br/rss", site: "https://www.panrotas.com.br/" },
+  // ─── sites que bloqueiam robôs ou não têm feed: lidos pelo Google Notícias ───
+  // (notícias do setor: só entra o que for promoção ou falar de Teresina)
+  { id: "gn-voopter", nome: "Voopter (via Google Notícias)", tipo: "passagens", url: noticias("site:voopter.com.br"), google: true },
+  { id: "gn-viajanamilha", nome: "Viaja na Milha (via Google Notícias)", tipo: "milhas", url: noticias("site:viajanamilha.com.br"), google: true },
+  { id: "gn-meumilhao", nome: "Meu Milhão de Milhas (via Google Notícias)", tipo: "milhas", url: noticias("site:meumilhaodemilhas.com"), google: true },
+  { id: "gn-aeroin", nome: "AEROIN (via Google Notícias)", tipo: "noticias", url: noticias("site:aeroin.net (promoção OR passagens OR Teresina OR milhas)"), google: true },
+  { id: "gn-aeroflap", nome: "AEROFLAP (via Google Notícias)", tipo: "noticias", url: noticias("site:aeroflap.com.br (promoção OR passagens OR Teresina OR milhas)"), google: true },
+  { id: "gn-mercado", nome: "Mercado & Eventos (via Google Notícias)", tipo: "noticias", url: noticias("site:mercadoeeventos.com.br (promoção OR passagens OR Teresina)"), google: true },
+  { id: "gn-panrotas", nome: "PANROTAS (via Google Notícias)", tipo: "noticias", url: noticias("site:panrotas.com.br (promoção OR passagens OR Teresina)"), google: true },
 
   // ─── Google Notícias: pega o que outros sites publicaram ───
   { id: "gn-promo", nome: "Google Notícias · promoção de passagens", tipo: "passagens", url: noticias('"promoção" passagens aéreas'), google: true },

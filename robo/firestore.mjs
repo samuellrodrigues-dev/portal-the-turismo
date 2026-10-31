@@ -5,11 +5,20 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 
 function contaDeServico() {
-  const v = process.env.FIREBASE_SERVICE_ACCOUNT || process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+  const v = String(process.env.FIREBASE_SERVICE_ACCOUNT || process.env.GOOGLE_APPLICATION_CREDENTIALS || "").replace(/^\uFEFF/, "").trim();
   if (!v) return null;
-  const txt = v.trim().startsWith("{") ? v : fs.readFileSync(v, "utf8");
-  const j = JSON.parse(txt);
-  if (!j.client_email || !j.private_key) throw new Error("A conta de serviço precisa de client_email e private_key.");
+  // aceita o conteúdo do .json (mesmo com aspas ou espaços em volta), o mesmo conteúdo em base64, ou o caminho do arquivo
+  let txt = "";
+  if (v.includes("{") && v.includes("}")) txt = v.slice(v.indexOf("{"), v.lastIndexOf("}") + 1);
+  else if (/^[A-Za-z0-9+/=\s]{200,}$/.test(v)) { const d = Buffer.from(v, "base64").toString("utf8"); if (d.includes("{")) txt = d.slice(d.indexOf("{"), d.lastIndexOf("}") + 1); }
+  else if (fs.existsSync(v)) txt = fs.readFileSync(v, "utf8");
+  if (!txt) {
+    throw new Error(`o segredo FIREBASE_SERVICE_ACCOUNT não é o conteúdo do arquivo .json da chave (tem ${v.length} caracteres e devia começar com "{"). No Mac, rode: pbcopy < arquivo.json, e cole de novo no segredo.`);
+  }
+  let j;
+  try { j = JSON.parse(txt); }
+  catch { throw new Error("o segredo FIREBASE_SERVICE_ACCOUNT parece cortado ou alterado (não é um JSON válido). Copie de novo com pbcopy < arquivo.json e cole no segredo."); }
+  if (!j.client_email || !j.private_key) throw new Error("a chave precisa ter client_email e private_key: use o arquivo .json baixado em Chaves → Adicionar chave → JSON.");
   return j;
 }
 
