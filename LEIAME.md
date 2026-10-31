@@ -7,8 +7,8 @@ Um site só, com login por **nome + PIN**, e cada sistema numa aba:
 | **Oktoplus** | Quem está com cada conta Oktoplus (pegar, devolver, esgotou, histórico) e **Logins** (CPF, senha e e-mail das contas e dos outros sistemas da agência) | Firestore (contas copiadas do Neon uma vez; logins colados da planilha) |
 | **Sala VIP** | O mesmo sistema de antes, com o painel "Emitir hoje" | Firestore, **os mesmos dados de hoje** (coleção `usos`) |
 | **Valores a receber** | **A receber**: quem deve, CPF/CNPJ, prazo e parcelas · **Boletos a pagar**: os boletos da agência, como antes. Tema de céu e nuvens | Firestore (`receber` e `boletos`) |
-| **Passagens** | Promoções de passagens num painel de embarque: destaques, radar saindo de Teresina, filtros, texto pronto para o WhatsApp | Firestore (`promocoes`), gravado pelo robô |
-| **Milhas** | Bônus de transferência, passagens com milhas, compra de milhas e milheiro, por programa | Firestore (`promocoes`), gravado pelo robô |
+| **Passagens** | Só passagens em promoção **com preço**, num painel de embarque: destaques, radar saindo de Teresina, filtros, texto pronto para o WhatsApp | Firestore (`promocoes`), gravado pelo robô |
+| **Milhas** | Só ofertas para **comprar milhas e pontos** nos programas brasileiros (desconto na compra e milheiro) | Firestore (`promocoes`), gravado pelo robô |
 | **Operação** | Atalho para o THE TURISMO Operação, que continua no Claude | Claude |
 | **Equipe** | (só administrador) pessoas, PINs e o que cada uma vê | Firestore |
 
@@ -131,10 +131,18 @@ e volta no passo 5, já no endereço novo.
 
 ## Robô de promoções (abas Passagens e Milhas)
 
-O robô fica na pasta `robo/`. Ele lê cerca de 30 fontes (blogs de promoção, blogs de milhas, notícias do setor e
-buscas do Google Notícias), tira de cada título o preço, as milhas, o bônus, o milheiro, a companhia, o programa,
-os destinos, se fala de Teresina e o prazo ("só hoje", "até 05/11"), junta a mesma promoção vinda de vários sites
-e grava no banco. Ninguém da equipe precisa fazer nada: as abas só mostram o que ele gravou.
+O robô fica na pasta `robo/`. Ele lê 24 fontes (blogs de promoção, blogs de milhas e buscas do Google Notícias),
+tira de cada título o preço, o milheiro, o desconto, a companhia, o programa, os destinos, se fala de Teresina e o
+prazo ("só hoje", "até 05/11"), junta a mesma promoção vinda de vários sites e grava no banco.
+Ninguém da equipe precisa fazer nada: as abas só mostram o que ele gravou.
+
+O que entra (filtro em `robo/extrair.mjs`, função `noEscopo`):
+- **Passagens:** só passagem aérea em promoção com preço. Ficam de fora notícias (aeroporto, golpe, pesquisa,
+  "preço médio"…), pacotes e seleções sem preço.
+- **Milhas:** só ofertas para comprar milhas ou pontos (desconto na compra, milheiro) nos programas brasileiros:
+  Smiles, LATAM Pass, Azul Fidelidade, Livelo, Esfera, Átomos, Inter Loop, Dotz e outros. Ficam de fora bônus de
+  transferência, passagens com milhas, clubes, cartões e programas estrangeiros (AAdvantage, Avios, TAP…).
+- Quando o filtro muda, a próxima rodada também tira do banco o que não se encaixa mais.
 Toda a equipe ativa vê as duas abas (são promoções públicas). Só o robô grava.
 
 **1. Testar no seu Mac** (não grava nada, só mostra o que achou em cada fonte):

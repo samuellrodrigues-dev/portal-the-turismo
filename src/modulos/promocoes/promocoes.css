@@ -232,8 +232,9 @@ em.novo { font: 800 10.5px/1.3 var(--mono); font-style: normal; text-transform: 
 .mil-recorde {
   position: relative; overflow: hidden; display: grid; align-content: start; gap: 4px; min-height: 150px; padding: 16px 18px; border: 0; border-radius: 18px;
   background: linear-gradient(135deg, var(--cor), color-mix(in srgb, var(--cor) 45%, #08090B)); color: #fff; text-align: left; cursor: pointer;
-  box-shadow: 0 18px 34px -22px color-mix(in srgb, var(--cor) 70%, #000); transition: transform .15s;
+  box-shadow: 0 18px 34px -22px color-mix(in srgb, var(--cor) 70%, #000); transition: transform .15s; text-decoration: none;
 }
+.pro a.mil-recorde { color: #fff; }
 .mil-recorde:hover { transform: translateY(-2px); }
 .mil-recorde::before { content: ""; position: absolute; right: 16px; top: 16px; width: 30px; height: 23px; border-radius: 5px; background: linear-gradient(135deg, #F7DC8A, #C69B2E); opacity: .85; }
 .mil-recorde::after { content: ""; position: absolute; right: -40px; bottom: -60px; width: 180px; height: 180px; border-radius: 50%; border: 22px solid rgba(255, 255, 255, .07); }
@@ -242,7 +243,7 @@ em.novo { font: 800 10.5px/1.3 var(--mono); font-style: normal; text-transform: 
 .mil-recorde span { font-size: 14px; font-weight: 600; opacity: .92; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mil-recorde em { justify-self: start; margin-top: auto; padding: 3px 8px; border-radius: 6px; background: rgba(255, 255, 255, .16); font: 700 11px/1.3 var(--mono); font-style: normal; text-transform: uppercase; letter-spacing: .04em; }
 
-.mil-progs { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 6px; }
+.mil-progs { display: flex; flex-wrap: wrap; gap: 6px; }
 .mil-progs button { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--tt-linha); background: transparent; color: var(--tt-tx); font: 600 13.5px/1 var(--tt-sans); cursor: pointer; }
 .mil-progs button i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
 .mil-progs button span { font-size: 12px; color: var(--tt-mudo); }

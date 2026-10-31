@@ -33,6 +33,8 @@ export const ARQUIVOS = {
     { t: "Escapada para Buenos Aires! Passagens aéreas para a Argentina a partir de R$ 1.153 ida e volta", l: "https://www.melhoresdestinos.com.br/promocao/escapada-argentina-passagens-buenos-aies-1153", h: 50 },
     { t: "Ofertas no ar! 17 excelentes promoções de passagens, pacotes e hotéis para aproveitar hoje", l: "https://www.melhoresdestinos.com.br/promocao/17-promocoes-30-out", h: 1 },
     { t: "Passagens para Paris a partir de R$ 2.890 ida e volta", l: "https://www.melhoresdestinos.com.br/promocao/paris-antiga", h: 15 * 24 },
+    { t: "Preço médio da passagem para Lisboa chega a R$ 4.200, diz pesquisa", l: "https://www.melhoresdestinos.com.br/noticia/preco-medio-lisboa", h: 6 },
+    { t: "Pacotes para Maceió com aéreo + hotel a partir de R$ 999 por pessoa", l: "https://www.melhoresdestinos.com.br/promocao/pacotes-maceio-999", h: 7 },
   ]),
   "/pp.xml": wp("Passageiro de Primeira", [
     { t: "Só hoje! Smiles oferece até 80% de bônus nas transferências de pontos da Livelo", l: "https://passageirodeprimeira.com/so-hoje-smiles-80-livelo/", h: 4, c: ["Smiles", "Livelo"] },
@@ -41,6 +43,10 @@ export const ARQUIVOS = {
     { t: "Clube Smiles a partir de R$ 21,90 por mês com 5 mil milhas de bônus", l: "https://passageirodeprimeira.com/clube-smiles-2190/", h: 30 },
     { t: "Azul Fidelidade vende pontos com 50% de desconto", l: "https://passageirodeprimeira.com/azul-pontos-50-off/", h: 10 },
     { t: "Como usar milhas para viajar de executiva", l: "https://passageirodeprimeira.com/como-executiva/", h: 12 },
+    { t: "Latam Pass: compre pontos com até 60% de desconto até 05/11", l: "https://passageirodeprimeira.com/latam-pass-compra-60/", h: 6 },
+    { t: "Smiles oferece até 70% de bônus na transferência de pontos de parceiros + 75% OFF para compra de milhas", l: "https://passageirodeprimeira.com/smiles-70-bonus-75-off/", h: 9 },
+    { t: "AAdvantage vende milhas com 50% de desconto", l: "https://passageirodeprimeira.com/aadvantage-50/", h: 5 },
+    { t: "Livelo: compre pontos com 50% de desconto só hoje", l: "https://passageirodeprimeira.com/livelo-compra-50-hoje/", h: 1 },
   ]),
   "/gn-milhas.xml": gnews([
     { t: "Smiles oferece até 80% de bônus nas transferências de pontos da Livelo", f: "Passageiro de Primeira", u: "https://passageirodeprimeira.com", h: 4, id: "a" },
@@ -50,6 +56,8 @@ export const ARQUIVOS = {
     { t: "Azul anuncia novo voo direto entre Teresina e Lisboa", f: "Cidade Verde", u: "https://cidadeverde.com", h: 9, id: "c" },
     { t: "Voos de Teresina para São Paulo por R$ 437 ida e volta com a Gol", f: "Meio Norte", u: "https://www.meionorte.com", h: 11, id: "d" },
     { t: "Prefeitura de Teresina anuncia obras no centro", f: "Cidade Verde", u: "https://cidadeverde.com", h: 3, id: "e" },
+    { t: "Aeroporto de Teresina espera alta de 33% no fluxo de passageiros", f: "Cidade Verde", u: "https://cidadeverde.com", h: 4, id: "f" },
+    { t: "Mulher é presa em Fortaleza por aplicar golpes com a venda de passagens", f: "Meio Norte", u: "https://www.meionorte.com", h: 6, id: "g" },
   ]),
   "/atom.xml": atom([
     { t: "Passagens para Salvador a partir de R$ 572 ida e volta no fim de semana", l: "https://viagens.exemplo.test/salvador-572", h: 14, d: "Voos da Gol e da Azul em novembro." },

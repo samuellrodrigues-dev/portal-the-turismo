@@ -9,7 +9,9 @@ import { bate, diaDe, ha, horaDe, preco, semAcento, situacao, useFeed, useRadar,
 import { BotaoCopiar, Chips, Fontes, ICO, LinksFontes, Vazio, useAgora, useVisita } from "./comum";
 import "./promocoes.css";
 
-type Filtro = "todas" | "teresina" | "nacional" | "internacional" | "pacote" | "urgente";
+type Filtro = "todas" | "teresina" | "nacional" | "internacional" | "urgente";
+/** Só passagens com preço (o robô já filtra; isto cobre o que ficou de leituras antigas). */
+const serve = (p: Promo) => p.preco != null && !["pacote", "selecao", "noticia"].includes(p.categoria);
 const ROTULO_CAT: Record<string, string> = { nacional: "Voos nacionais", internacional: "Internacional", selecao: "Seleção do dia", pacote: "Pacote", noticia: "Notícia", geral: "Vários destinos" };
 
 function destinoDe(p: Promo) {
@@ -181,7 +183,7 @@ export default function Passagens({ eu }: { eu: Eu }) {
   const [ordem, setOrdem] = useState<"recentes" | "preco">("recentes");
   const [encerradas, setEncerradas] = useState(false);
   const hoje = hojeIso();
-  const itens = feed?.itens || [];
+  const itens = useMemo(() => (feed?.itens || []).filter(serve), [feed]);
 
   const ativos = useMemo(() => itens.filter((p) => encerradas || !situacao(p, hoje)?.encerrada), [itens, encerradas, hoje]);
   const conta = (f: Filtro) => ativos.filter((p) => passa(p, f)).length;
@@ -189,7 +191,6 @@ export default function Passagens({ eu }: { eu: Eu }) {
     if (f === "teresina") return p.teresina;
     if (f === "nacional") return p.categoria === "nacional";
     if (f === "internacional") return p.categoria === "internacional";
-    if (f === "pacote") return p.categoria === "pacote" || /pacote/i.test(p.titulo);
     if (f === "urgente") return !!situacao(p, hoje)?.urgente;
     return true;
   }
@@ -253,7 +254,7 @@ export default function Passagens({ eu }: { eu: Eu }) {
           <div className="pro-barra">
             <Chips<Filtro> rotulo="Filtrar" valor={filtro} mudar={setFiltro} opcoes={[
               ["todas", "Todas", ativos.length], ["teresina", "Teresina", conta("teresina")], ["nacional", "Nacionais", conta("nacional")],
-              ["internacional", "Internacionais", conta("internacional")], ["pacote", "Pacotes", conta("pacote")], ["urgente", "Acabam logo", conta("urgente")],
+              ["internacional", "Internacionais", conta("internacional")], ["urgente", "Acabam logo", conta("urgente")],
             ]} />
             <div className="pro-barra-dir">
               <label className="pro-busca"><span className="sr">Buscar</span>{ICO.busca}

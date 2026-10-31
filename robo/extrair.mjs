@@ -222,6 +222,38 @@ export function analisar({ titulo, resumo = "", link = "", fonteTipo = "misto", 
   };
 }
 
+/* ─── o que a agência quer em cada aba ─── */
+// Milhas: só ofertas para COMPRAR milhas/pontos nos programas brasileiros.
+// Passagens: só passagens aéreas com preço (sem notícias, pacotes ou seleções sem preço).
+export const PROGRAMAS_BR = ["Smiles", "LATAM Pass", "Azul Fidelidade", "Livelo", "Esfera", "Átomos", "Inter Loop", "Dotz", "Km de Vantagens", "Coopera", "Curtaí"];
+const NOTICIA = /preco medio|precos? sobe|ficam? mais car|aumento d|alta de \d|reajuste|inflacao|golpe|\bpres[ao]\b|policia|morre|acidente|eleic|eleitoral|votac|\bpesquisa\b|levantamento|\bestudo\b|ranking|fluxo de passageiros|movimentacao de passageiros|recorde de passageiros|\banac\b|procon|justica|tribunal|processo|greve|cancelad|investiga|denuncia|prefeitura|governo/;
+const PROMO_PASSAGEM = /promo|oferta|a partir de|por apenas|por r\$|baixou|desconto|imperdivel|barat|liquida|black ?friday|cyber|so hoje|relampago|tarifa|saldao|queima|cupom|voltou|corra|aproveite|ida e volta|o trecho|caiu/;
+const COMPRA = /compr(a|ar|e|em)\s+(de\s+)?(\d[\d.]*\s+)?(mil\s+)?(milhas|pontos|avios)|venda de (milhas|pontos)|vende(m)? (milhas|pontos)|(milhas|pontos) (com|por) (ate )?\d{1,3}\s?% (de desconto|off|mais barat)|(milhas|pontos) com desconto|(milhas|pontos) (pela|na) metade|milheiro/;
+
+/** true se a promoção é do tipo que a agência quer ver. */
+export function noEscopo(a, titulo) {
+  const tb = baixa(titulo);
+  if (NOTICIA.test(tb)) return false;
+  if (a.tipo === "passagens") {
+    return a.preco != null && !["pacote", "selecao", "noticia"].includes(a.categoria)
+      && /passage|\bvoos?\b|aere|tarifa|bilhete|trecho/.test(tb) && PROMO_PASSAGEM.test(tb);
+  }
+  const estrangeiro = a.programas.length > 0 && a.programas.every((p) => !PROGRAMAS_BR.includes(p));
+  const compra = a.milheiro != null || COMPRA.test(tb) || (a.desconto != null && /(compr|vend|adquir)/.test(tb) && /(milhas|pontos)/.test(tb));
+  return compra && !estrangeiro;
+}
+
+/** Analisa e já aplica o escopo da agência (o que não interessa volta null). */
+export function analisarParaAgencia(dados) {
+  const a = analisar(dados);
+  if (!a || !noEscopo(a, dados.titulo)) return null;
+  if (a.tipo === "milhas") {
+    a.categoria = "compra";
+    a.programas = a.programas.filter((p) => PROGRAMAS_BR.includes(p));
+  }
+  return a;
+}
+
 /** Limpa o resumo do feed (tira "O post … apareceu primeiro em …", "Leia mais" etc.). */
 export function limparResumo(s, titulo = "") {
   let r = String(s || "")

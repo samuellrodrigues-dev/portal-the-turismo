@@ -8,7 +8,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { FONTES } from "./fontes.mjs";
 import { lerFeed, acharFeed } from "./rss.mjs";
-import { analisar, limparResumo, semAcento } from "./extrair.mjs";
+import { analisarParaAgencia, limparResumo, semAcento } from "./extrair.mjs";
 import { conectar } from "./firestore.mjs";
 import { radarGoogle, radarAviasales } from "./radar.mjs";
 
@@ -84,12 +84,21 @@ function itensDaFonte(f, feed) {
     if (em > new Date(agora.getTime() + DIA)) em = agora;
     if (agora - em > NOVO_ATE) continue;
     const resumo = f.google ? "" : limparResumo(it.resumo || it.conteudo, titulo);
-    const a = analisar({ titulo, resumo, link: it.link, fonteTipo: f.tipo, publicado: em });
-    if (!a || (f.tipo === "noticias" && a.categoria === "noticia" && !a.teresina)) { descartados++; continue; }
+    const a = analisarParaAgencia({ titulo, resumo, link: it.link, fonteTipo: f.tipo, publicado: em });
+    if (!a) { descartados++; continue; }
     if (f.tipo === "passagens" && a.tipo === "milhas" && !a.programas.length && !a.milhas && !a.bonus) a.tipo = "passagens";
     aceitos.push({ id: idDe(it.link), titulo, resumo, link: it.link, fonte, fonteId: f.id, em, visto: agora, ...a, outras: [] });
   }
   return { aceitos, descartados };
+}
+
+/** Passa de novo as regras nos que já estavam no banco: se o filtro mudou, o que não interessa mais sai. */
+export function reavaliar(itens, tipo) {
+  const tipoFonte = new Map(fontes.map((f) => [f.id, f.tipo]));
+  return (itens || []).flatMap((i) => {
+    const a = analisarParaAgencia({ titulo: i.titulo, resumo: i.resumo || "", link: i.link, fonteTipo: tipoFonte.get(i.fonteId) || "misto", publicado: new Date(i.em) });
+    return a && a.tipo === tipo ? [{ ...i, ...a, outras: i.outras || [] }] : [];
+  });
 }
 
 /** Junta os novos com os que já estavam no banco, sem repetir a mesma promoção vinda de vários sites. */
@@ -155,7 +164,7 @@ async function principal() {
       const { itens } = juntar([], novos[tipo]);
       console.log(`\n── ${tipo.toUpperCase()} (${itens.length} depois de juntar as repetidas) ──`);
       for (const i of itens.slice(0, 12)) {
-        const num = i.preco ? `R$ ${i.preco}` : i.bonus ? `${i.bonus}% bônus` : i.milhas ? `${i.milhas} milhas` : i.milheiro ? `milheiro R$ ${i.milheiro}` : i.desconto ? `${i.desconto}% off` : "";
+        const num = i.preco ? `R$ ${i.preco}` : i.milheiro ? `milheiro R$ ${i.milheiro}` : i.desconto ? `${i.desconto}% off` : i.bonus ? `${i.bonus}% bônus` : "";
         console.log(`  • [${i.categoria}] ${i.titulo}\n      ${[num, i.cias.join("/"), i.programas.join("/"), i.destinos.join(", "), i.selos.join(", "), i.teresina ? "TERESINA" : "", i.fonte, i.outras.length ? `+${i.outras.length} fontes` : ""].filter(Boolean).join(" · ")}`);
       }
     }
@@ -167,7 +176,9 @@ async function principal() {
   const resumo = { atualizadoEm: agora };
   for (const tipo of ["passagens", "milhas"]) {
     const atual = await db.ler(`promocoes/${tipo}`);
-    const { itens, entraram } = juntar(atual?.itens, novos[tipo]);
+    const antigos = reavaliar(atual?.itens, tipo);
+    const sairam = (atual?.itens?.length || 0) - antigos.length;
+    const { itens, entraram } = juntar(antigos, novos[tipo]);
     const antes = new Map((atual?.fontes || []).map((s) => [s.id, s]));
     const fontesAba = status
       .filter((s) => s.tipo === tipo || s.tipo === "misto" || s.tipo === "noticias")
@@ -178,7 +189,7 @@ async function principal() {
     await db.gravar(`promocoes/${tipo}`, { atualizadoEm: agora, itens, fontes: fontesAba, versao: 1 });
     // resumo pequeno para o selo da aba (quantas novas desde a última visita), sem baixar a lista toda
     resumo[tipo] = { total: itens.length, vistos: itens.map((i) => i.visto).sort((a, b) => b - a).slice(0, 120) };
-    console.log(`gravado promocoes/${tipo}: ${itens.length} promoções (${entraram} novas)`);
+    console.log(`gravado promocoes/${tipo}: ${itens.length} promoções (${entraram} novas${sairam > 0 ? `, ${sairam} fora do filtro saíram` : ""})`);
   }
   await db.gravar("promocoes/resumo", resumo);
 
