@@ -1,0 +1,38 @@
+/* ═══════════════ Fundo animado (aviões e rotas) ═══════════════
+   As cores ficam aqui, em variáveis; o desenho é feito no canvas (FundoViagem.tsx). */
+.tt-fundo {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  --aviao: #2A3038; --aviao-op: .58; --sombra-aviao: none;
+  --rastro: #D29E00; --rastro-op: .9; --rastro-largura: 2.3; --rastro-estilo: pontos;
+  --rotulo: #7D7B74; --rotulo-fundo: rgba(255, 255, 255, .62); --rotulo-borda: rgba(26, 26, 24, .07);
+  --luzes: 0; --estrelas: 0;
+}
+.tt-fundo[data-tema="ceu"] {
+  --aviao: #FFFFFF; --aviao-op: .96; --sombra-aviao: rgba(38, 88, 158, .2);
+  --rastro: #FFFFFF; --rastro-op: .85; --rastro-largura: 3.4; --rastro-estilo: linha;
+  --rotulo: #2F5F98; --rotulo-fundo: rgba(255, 255, 255, .55); --rotulo-borda: rgba(255, 255, 255, .7);
+}
+.tt-fundo[data-tema="entrada"] {
+  --aviao: #F3F4F6; --aviao-op: .9; --rastro: #F2B705; --rastro-largura: 2.4;
+  --rotulo: rgba(246, 211, 107, .85); --rotulo-fundo: rgba(10, 12, 15, .45); --rotulo-borda: rgba(242, 183, 5, .22);
+  --luzes: 1; --estrelas: .55;
+}
+@media (prefers-color-scheme: dark) {
+  .tt-fundo[data-tema="mapa"] {
+    --aviao: #D7DDE4; --aviao-op: .5; --rastro: #F2B705; --rastro-op: .8; --rastro-largura: 2.1;
+    --rotulo: rgba(230, 196, 100, .7); --rotulo-fundo: rgba(0, 0, 0, .35); --rotulo-borda: rgba(242, 183, 5, .16);
+    --luzes: 1; --estrelas: .3;
+  }
+  .tt-fundo[data-tema="ceu"] {
+    --aviao: #CAD8EC; --aviao-op: .75; --sombra-aviao: none; --rastro: #BCD0F2; --rastro-op: .5; --rastro-largura: 2.8;
+    --rotulo: rgba(175, 200, 240, .8); --rotulo-fundo: rgba(5, 12, 24, .4); --rotulo-borda: rgba(140, 175, 230, .2);
+    --luzes: 1; --estrelas: .35;
+  }
+}
+
+.tt-tela { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* estrelas: só na entrada e no modo escuro */
+.tt-estrelas { position: absolute; inset: 0; opacity: var(--estrelas); }
+.tt-estrelas i { position: absolute; border-radius: 50%; background: #fff; }
+@media print { .tt-fundo { display: none !important; } }

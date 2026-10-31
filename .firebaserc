@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "project-sala-vip"
+  },
+  "targets": {
+    "project-sala-vip": {
+      "hosting": {
+        "portal": [
+          "theturismo-sistemas"
+        ],
+        "antigo": [
+          "project-sala-vip"
+        ]
+      }
+    }
+  }
+}

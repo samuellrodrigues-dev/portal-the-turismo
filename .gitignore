@@ -1,0 +1,13 @@
+node_modules
+dist
+.firebase
+*.log
+firestore-debug.log
+tests/out
+# chaves do Google nunca vão para o GitHub
+*service-account*.json
+robo-promocoes*.json
+*-chave*.json
+project-sala-vip-*.json
+.env*
+*.zip

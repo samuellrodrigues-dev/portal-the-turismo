@@ -1,0 +1,252 @@
+rules_version = '2';
+
+// ═══════════════════════════════════════════════════════════════════════
+//  Sistemas THE TURISMO — regras de acesso do Firestore
+//
+//  Cada pessoa entra com nome + PIN (uma conta do Firebase Authentication
+//  por pessoa). O que ela pode fazer fica em uids/{uid}:
+//    { pid, nome, admin, ativo, abas: { oktoplus, salavip, boletos, operacao } }
+//
+//  admin = true          → vê e faz tudo, e cuida da equipe
+//  abas.oktoplus         → '' | 'usar' | 'admin'
+//  abas.salavip          → '' | 'operador' | 'admin'
+//  abas.boletos          → '' | 'ver' | 'editar'   (aba "Valores a receber": boletos a pagar e valores a receber)
+//  abas.operacao         → '' | 'ver'   (é só um atalho; não há dados aqui)
+//
+//  As permissões são garantidas aqui, não só pela tela.
+// ═══════════════════════════════════════════════════════════════════════
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── quem está pedindo ─────────────────────────────────────────────
+    function logado() { return request.auth != null; }
+    function doc(c, id) { return /databases/$(database)/documents/$(c)/$(id); }
+    function cadastrado() { return logado() && exists(doc('uids', request.auth.uid)); }
+    function eu() { return get(doc('uids', request.auth.uid)).data; }
+    function ativo() { return cadastrado() && eu().ativo == true; }
+    function admin() { return ativo() && eu().admin == true; }
+    function aba(nome) { return eu().abas.get(nome, ''); }
+
+    function oktoAdmin() { return admin() || (ativo() && aba('oktoplus') == 'admin'); }
+    function oktoUsar() { return oktoAdmin() || (ativo() && aba('oktoplus') == 'usar'); }
+    function vipAdmin() { return admin() || (ativo() && aba('salavip') == 'admin'); }
+    function vipOperador() { return ativo() && aba('salavip') == 'operador'; }
+    function boletosEditar() { return admin() || (ativo() && aba('boletos') == 'editar'); }
+    function boletosVer() { return boletosEditar() || (ativo() && aba('boletos') == 'ver'); }
+
+    function texto(v, max) { return v is string && v.size() <= max; }
+    function dataIso(v) { return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'); }
+    function mesIso(v) { return v is string && v.matches('^[0-9]{4}-[0-9]{2}$'); }
+    function so(campos) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos); }
+    // eu mesmo, do jeito que os documentos guardam: { pid, nome }
+    function souEu(p) { return p is map && p.pid == eu().pid && p.nome == eu().nome; }
+
+    // primeiro acesso: o mesmo lote cria a lista pública, a pessoa e o uid do administrador
+    function inicializando() {
+      return !exists(doc('publico', 'equipe')) && existsAfter(doc('publico', 'equipe'));
+    }
+
+    // ═══ Equipe ════════════════════════════════════════════════════════
+
+    // Lista de nomes da tela de entrada (sem dados pessoais): qualquer um lê.
+    match /publico/equipe {
+      allow read: if true;
+      allow create: if logado()
+        && getAfter(doc('uids', request.auth.uid)).data.admin == true
+        && request.resource.data.pessoas is list
+        && request.resource.data.pessoas.size() == 1;
+      allow update: if admin() && request.resource.data.pessoas is list && request.resource.data.pessoas.size() <= 200;
+      allow delete: if false;
+    }
+
+    match /uids/{uid} {
+      allow read: if logado() && (request.auth.uid == uid || admin());
+      allow create: if admin()
+        || (inicializando() && uid == request.auth.uid
+            && request.resource.data.admin == true && request.resource.data.ativo == true);
+      allow update, delete: if admin();
+    }
+
+    match /pessoas/{pid} {
+      allow read: if admin() || (ativo() && eu().pid == pid);
+      allow create: if admin() || (inicializando() && request.resource.data.uid == request.auth.uid);
+      // a própria pessoa só pode mudar o aparelho de costume (Oktoplus)
+      allow update: if admin()
+        || (ativo() && eu().pid == pid && so(['aparelho', 'atualizadoEm']) && texto(request.resource.data.aparelho, 40));
+      allow delete: if false;
+    }
+
+    // ═══ Sala VIP (mesmos dados do sistema antigo) ═════════════════════
+
+    match /usos/{id} {
+      function usoValido(d) {
+        return d.keys().hasOnly(['emissao', 'cliente', 'contato', 'obs', 'data', 'emitirEm',
+                                 'aeroportos', 'acessos', 'status', 'atendente', 'valor',
+                                 'criadoEm', 'atualizadoEm', 'atualizadoPor'])
+          && (!('atendente' in d) || texto(d.atendente, 60))
+          && (!('valor' in d) || d.valor == null || (d.valor is number && d.valor >= 0 && d.valor <= 1000000))
+          && d.emissao is string && d.emissao.size() > 0 && d.emissao.size() <= 40
+          && d.cliente is string && d.cliente.size() > 0 && d.cliente.size() <= 120
+          && texto(d.contato, 120)
+          && texto(d.obs, 500)
+          && dataIso(d.data)
+          && dataIso(d.emitirEm)
+          && d.aeroportos is list && d.aeroportos.size() >= 1 && d.aeroportos.size() <= 8
+          && d.acessos is int && d.acessos >= 1 && d.acessos <= 99
+          && d.status in ['Pendente', 'Emitido', 'Enviado']
+          && d.atualizadoEm == request.time
+          && d.atualizadoPor == eu().nome;
+      }
+      function soMudouStatus() {
+        return so(['status', 'atualizadoEm', 'atualizadoPor'])
+          && request.resource.data.status in ['Pendente', 'Emitido', 'Enviado']
+          && request.resource.data.atualizadoEm == request.time
+          && request.resource.data.atualizadoPor == eu().nome;
+      }
+      allow read: if vipAdmin() || vipOperador();
+      allow create: if vipAdmin() && usoValido(request.resource.data) && request.resource.data.criadoEm == request.time;
+      allow update: if (vipAdmin() && usoValido(request.resource.data)) || (vipOperador() && soMudouStatus());
+      allow delete: if vipAdmin();
+    }
+
+    // equipe do sistema antigo da Sala VIP: fica guardada, ninguém mexe
+    match /acesso/{x} {
+      allow read: if admin();
+      allow write: if false;
+    }
+
+    // ═══ Oktoplus ══════════════════════════════════════════════════════
+
+    match /okto_contas/{cid} {
+      function usoMeu(u) {
+        return u is map && u.pid == eu().pid && u.nome == eu().nome && u.inicio == request.time
+          && texto(u.id, 40) && texto(u.aparelho, 40);
+      }
+      function pegar() {
+        return resource.data.get('uso', null) == null && resource.data.ativa == true
+          && so(['uso']) && usoMeu(request.resource.data.uso);
+      }
+      function devolverMeu() {
+        return resource.data.get('uso', null) != null && resource.data.uso.pid == eu().pid
+          && so(['uso']) && request.resource.data.uso == null;
+      }
+      function esgotarMeu() {
+        return resource.data.get('uso', null) != null && resource.data.uso.pid == eu().pid
+          && so(['uso', 'esgotadaMes', 'esgotadaPor', 'esgotadaEm'])
+          && request.resource.data.uso == null
+          && mesIso(request.resource.data.esgotadaMes)
+          && souEu(request.resource.data.esgotadaPor)
+          && request.resource.data.esgotadaEm == request.time;
+      }
+      allow read: if oktoUsar();
+      allow create, delete: if oktoAdmin();
+      allow update: if oktoAdmin() || (oktoUsar() && (pegar() || devolverMeu() || esgotarMeu()));
+    }
+
+    match /okto_usos/{id} {
+      allow read: if oktoAdmin() || (oktoUsar() && resource.data.pid == eu().pid);
+      allow create: if oktoAdmin()
+        || (oktoUsar() && request.resource.data.pid == eu().pid && request.resource.data.nome == eu().nome
+            && request.resource.data.fim == null && request.resource.data.inicio == request.time);
+      allow update: if oktoAdmin()
+        || (oktoUsar() && resource.data.pid == eu().pid && resource.data.fim == null
+            && so(['fim', 'fimTipo', 'fimPor', 'meses']) && request.resource.data.fim == request.time
+            && souEu(request.resource.data.fimPor));
+      allow delete: if oktoAdmin();
+    }
+
+    // logins das contas (CPF, senha, e-mail) e de outros sistemas da agência:
+    // toda a equipe da Oktoplus lê; só quem administra a Oktoplus grava
+    match /okto_acessos/{id} {
+      function acessoValido(d) {
+        return d.keys().hasOnly(['nome', 'cpf', 'senha', 'email', 'obs', 'ordem', 'atualizadoEm', 'atualizadoPor'])
+          && d.nome is string && d.nome.size() > 0 && d.nome.size() <= 60
+          && texto(d.cpf, 20) && texto(d.senha, 120) && texto(d.email, 160) && texto(d.obs, 300)
+          && d.ordem is int
+          && d.atualizadoEm == request.time
+          && d.atualizadoPor == eu().nome;
+      }
+      allow read: if oktoUsar();
+      allow create, update: if oktoAdmin() && acessoValido(request.resource.data);
+      allow delete: if oktoAdmin();
+    }
+
+    match /okto_eventos/{id} {
+      allow read: if oktoAdmin();
+      allow create: if oktoAdmin() || (oktoUsar() && souEu(request.resource.data.quem) && request.resource.data.em == request.time);
+      allow update, delete: if false;
+    }
+
+    // ═══ Boletos ═══════════════════════════════════════════════════════
+
+    match /boletos/{bid} {
+      function boletoValido(d) {
+        return texto(d.descricao, 160) && d.descricao.size() > 0
+          && texto(d.beneficiario, 160)
+          && d.valor is number && d.valor >= 0 && d.valor <= 100000000
+          && dataIso(d.vencimento)
+          && d.status in ['aberto', 'pago']
+          && texto(d.linha, 60)
+          && texto(d.obs, 1000)
+          && d.anexos is list && d.anexos.size() <= 12;
+      }
+      allow read: if boletosVer();
+      allow create, update: if boletosEditar() && boletoValido(request.resource.data);
+      allow delete: if boletosEditar();
+    }
+
+    // valores a receber sem boleto (devedor, CPF/CNPJ, prazo, parcelas): mesmo acesso da aba
+    match /receber/{rid} {
+      function receberValido(d) {
+        return d.keys().hasOnly(['devedor', 'documento', 'nascimento', 'telefone', 'referencia', 'obs', 'parcelas', 'situacao', 'proxVenc', 'mesesRecebidos', 'criadoPor', 'criadoEm', 'atualizadoPor', 'atualizadoEm'])
+          && texto(d.devedor, 120) && d.devedor.size() > 0
+          && d.documento is string && d.documento.matches('^([0-9]{11}|[0-9]{14})?$')
+          && (d.nascimento == '' || dataIso(d.nascimento))
+          && d.telefone is string && d.telefone.matches('^[0-9]{0,15}$')
+          && texto(d.referencia, 160)
+          && texto(d.obs, 1000)
+          && d.parcelas is list && d.parcelas.size() >= 1 && d.parcelas.size() <= 60
+          && d.situacao in ['aberto', 'quitado']
+          && (d.proxVenc == null || dataIso(d.proxVenc))
+          && d.mesesRecebidos is list && d.mesesRecebidos.size() <= 60
+          && souEu(d.atualizadoPor) && d.atualizadoEm == request.time;
+      }
+      allow read: if boletosVer();
+      allow create: if boletosEditar() && receberValido(request.resource.data)
+        && souEu(request.resource.data.criadoPor) && request.resource.data.criadoEm == request.time;
+      allow update: if boletosEditar() && receberValido(request.resource.data)
+        && request.resource.data.criadoPor == resource.data.criadoPor && request.resource.data.criadoEm == resource.data.criadoEm;
+      allow delete: if boletosEditar();
+    }
+
+    // anexos dos boletos (PDF do boleto, comprovante): guardados em partes de até ~700 KB
+    match /arquivos/{aid} {
+      allow read: if boletosVer();
+      allow write: if boletosEditar();
+      match /partes/{n} {
+        allow read: if boletosVer();
+        allow create, update: if boletosEditar() && request.resource.data.d is string && request.resource.data.d.size() <= 960000;
+        allow delete: if boletosEditar();
+      }
+    }
+
+    // ═══ Promoções (abas Passagens e Milhas) ═══════════════════════════
+    // Só o robô grava (com a conta de serviço do Google, que não passa por estas regras).
+    // Toda a equipe ativa lê: são promoções públicas tiradas de sites de promoção.
+    match /promocoes/{id} {
+      allow read: if ativo();
+      allow write: if false;
+    }
+
+    // configurações e marcas internas (ex.: quando os dados da Oktoplus foram trazidos)
+    match /config/{id} {
+      allow read, write: if admin();
+    }
+
+    // qualquer outra coisa: fechado
+    match /{caminho=**} {
+      allow read, write: if false;
+    }
+  }
+}

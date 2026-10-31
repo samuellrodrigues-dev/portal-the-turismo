@@ -1,0 +1,272 @@
+// Valores a receber: cadastro com CPF/CNPJ, parcelas, receber (inclusive parcial), recebidos no mês, busca, planilha, celular.
+// Só dados inventados. Roda depois do e2e-4 (usa a equipe dos testes anteriores).
+import fs from "node:fs";
+import path from "node:path";
+import { navegador, pagina, entrar, foto, checar, totalFalhas, BASE, OUT, listarAdmin } from "./util.mjs";
+
+const pins = JSON.parse(fs.readFileSync(path.join(OUT, "pins.json"), "utf8"));
+const fmtIso = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Fortaleza", year: "numeric", month: "2-digit", day: "2-digit" });
+const hoje = fmtIso.format(new Date());
+const somaDias = (iso, n) => { const [a, m, d] = iso.split("-").map(Number); return new Date(Date.UTC(a, m - 1, d + n)).toISOString().slice(0, 10); };
+const mesesDepois = (iso, k) => { const [a, m, d] = iso.split("-").map(Number); const ult = new Date(Date.UTC(a, m - 1 + k + 1, 0)).getUTCDate(); return new Date(Date.UTC(a, m - 1 + k, Math.min(d, ult))).toISOString().slice(0, 10); };
+const br = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+
+// CPF e CNPJ inventados, com dígitos que conferem
+function cpfFalso(semente) {
+  const b = String(100000000 + (semente * 7919) % 899999999).slice(0, 9).split("").map(Number);
+  const dv = (n) => { let s = 0; for (let i = 0; i < n.length; i++) s += n[i] * (n.length + 1 - i); return ((s * 10) % 11) % 10; };
+  const d1 = dv(b), d2 = dv([...b, d1]);
+  return b.join("") + d1 + d2;
+}
+function cnpjFalso() {
+  const b = [1, 1, 2, 2, 2, 3, 3, 3, 0, 0, 0, 1];
+  const dv = (n, pesos) => { const s = pesos.reduce((t, p, i) => t + p * n[i], 0) % 11; return s < 2 ? 0 : 11 - s; };
+  const d1 = dv(b, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]), d2 = dv([...b, d1], [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return b.join("") + d1 + d2;
+}
+const CPF = cpfFalso(31), CNPJ = cnpjFalso();
+const fmtCpf = (d) => `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+const fmtCnpj = (d) => `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+
+// começa sem nenhum valor a receber (dá para rodar de novo)
+for (const x of await listarAdmin("receber")) {
+  await fetch("http://127.0.0.1:8080/v1/" + x.name, { method: "DELETE", headers: { Authorization: "Bearer owner" } });
+}
+const browser = await navegador();
+const p = await pagina(browser);
+
+console.log("1. a aba agora é Valores a receber");
+await entrar(p, "Samuel Rodrigues", pins.samuel);
+const abas = await p.$$eval(".tt-aba", (els) => els.map((e) => e.childNodes[1]?.textContent?.trim() || e.textContent.trim()));
+checar(abas.includes("Valores a receber") && !abas.includes("Boletos"), "nome da aba: " + abas.join(", "));
+await p.goto(BASE + "#/boletos");
+await p.waitForSelector(".bol-secoes a[aria-current=page]", { timeout: 15000 });
+checar((await p.textContent(".bol-secoes a[aria-current=page]")).startsWith("A receber"), "abre em A receber");
+checar((await p.textContent(".bol-topo h1")).trim() === "Valores a receber", "título Valores a receber");
+await p.waitForSelector(".bol-vazio.ceu-limpo:has-text('Nada a receber')", { timeout: 15000 });
+checar(true, "vazio: nada a receber");
+checar((await p.title()).startsWith("Valores a receber"), "título da janela: " + (await p.title()));
+
+const campo = (d, rotulo) => d.locator(`.bol-campo:has(> span:has-text("${rotulo}")) input`);
+async function abrirNovo() {
+  await p.click(".bol-btn.novo:has-text('Novo valor a receber')");
+  const d = p.locator("dialog.bol-dlg[open]");
+  await d.waitFor();
+  return d;
+}
+const salvar = async (d) => { await d.locator("footer button:has-text('Salvar')").click(); };
+const fechou = () => p.waitForSelector("dialog.bol-dlg[open]", { state: "detached", timeout: 15000 });
+
+console.log("2. valor único, atrasado, com CPF, nascimento e WhatsApp");
+let d = await abrirNovo();
+await salvar(d);
+checar((await d.locator(".bol-erro").textContent()).includes("nome de quem deve"), "sem nome avisa");
+await campo(d, "Nome do devedor").fill("Carla Mendes Teste");
+await campo(d, "CPF ou CNPJ").fill(CPF);
+await campo(d, "CPF ou CNPJ").blur();
+checar((await campo(d, "CPF ou CNPJ").inputValue()) === fmtCpf(CPF), "CPF formatado: " + (await campo(d, "CPF ou CNPJ").inputValue()));
+checar((await d.locator(".bol-campo small.ok").textContent()).includes("CPF confere"), "CPF confere");
+await campo(d, "Data de nascimento").fill("1990-05-14");
+checar((await d.locator(".bol-campo:has(> span:has-text('Data de nascimento')) small").textContent()).includes("anos"), "mostra a idade");
+await campo(d, "Telefone").fill("86999887766");
+await campo(d, "Telefone").blur();
+checar((await campo(d, "Telefone").inputValue()) === "(86) 99988-7766", "telefone formatado");
+await campo(d, "Referência da venda").fill("Pacote Gramado · LOC XKQ7P2");
+await campo(d, "Valor").fill("abc");
+await campo(d, "Prazo para receber").fill(somaDias(hoje, -3));
+await salvar(d);
+checar((await d.locator(".bol-erro").textContent()).includes("valor não ficou claro"), "valor inválido avisa");
+await campo(d, "Valor").fill("1.800");
+checar((await d.locator(".rec-linhas").count()) === 0, "com 1 parcela não mostra a tabela");
+await foto(p, "60-receber-novo");
+await salvar(d);
+await fechou();
+await p.waitForSelector('.nuvem.rec.clima-tempestade:has-text("Carla Mendes Teste")', { timeout: 15000 });
+const carla = p.locator('.nuvem.rec:has-text("Carla Mendes Teste")');
+checar((await carla.locator(".quando").first().textContent()).trim() === "atrasada há 3 dias", "atrasada há 3 dias");
+checar((await carla.locator(".nuvem-valor b").textContent()).trim() === "R$ 1.800,00", "valor R$ 1.800,00");
+const wpp = await carla.locator("a.wpp").getAttribute("href");
+const texto = decodeURIComponent(wpp.split("?text=")[1] || "");
+checar(wpp.startsWith("https://wa.me/5586999887766?text="), "link do WhatsApp com 55 + DDD");
+checar(texto.includes("Olá, Carla!") && texto.includes("R$ 1.800,00") && texto.includes("que venceu em " + br(somaDias(hoje, -3))) && texto.includes("Pacote Gramado"), "mensagem de cobrança: " + texto);
+
+console.log("3. CNPJ em 3 parcelas, a primeira vence hoje");
+d = await abrirNovo();
+await campo(d, "Nome do devedor").fill("Agência Sol Viagens LTDA");
+await campo(d, "CPF ou CNPJ").fill(CNPJ);
+checar((await d.locator(".bol-campo small.ok").textContent()).includes("CNPJ confere"), "CNPJ confere");
+checar((await d.locator(".bol-campo:has(> span:has-text('Data de nascimento'))").count()) === 0, "com CNPJ não pede nascimento");
+await campo(d, "Valor").fill("1000");
+await campo(d, "Parcelas").fill("3");
+await campo(d, "1ª parcela vence em").fill(hoje);
+const linhas = await d.locator(".rec-linhas li").evaluateAll((lis) => lis.map((li) => [...li.querySelectorAll("input")].map((i) => i.value)));
+const esperado = [[hoje, "R$ 333,34"], [mesesDepois(hoje, 1), "R$ 333,33"], [mesesDepois(hoje, 2), "R$ 333,33"]];
+checar(JSON.stringify(linhas) === JSON.stringify(esperado), "divisão em 3: " + JSON.stringify(linhas));
+checar((await d.locator(".rec-soma").textContent()).includes("R$ 1.000,00"), "soma R$ 1.000,00");
+await foto(p, "61-receber-parcelas");
+await salvar(d);
+await fechou();
+await p.waitForSelector('.nuvem.rec.clima-chuva:has-text("Agência Sol Viagens LTDA")', { timeout: 15000 });
+const sol = p.locator('.nuvem.rec:has-text("Agência Sol Viagens LTDA")');
+checar((await sol.locator(".rec-prog").textContent()).includes("0 de 3 parcelas recebidas · falta R$ 1.000,00"), "progresso 0 de 3");
+checar((await sol.locator(".nuvem-valor b").textContent()).trim() === "R$ 333,34", "mostra a parcela de hoje");
+checar((await sol.locator(".nuvem-sub .doc").textContent()).includes(fmtCnpj(CNPJ)), "CNPJ formatado no cartão");
+checar((await sol.locator("a.wpp").count()) === 0, "sem telefone, sem WhatsApp");
+
+console.log("4. CPF que não confere: pede confirmação");
+d = await abrirNovo();
+await campo(d, "Nome do devedor").fill("Teste CPF Errado");
+await campo(d, "CPF ou CNPJ").fill("123.456.789-00");
+checar((await d.locator(".bol-campo small.ruim").textContent()).includes("não confere"), "avisa que não confere");
+await campo(d, "Valor").fill("50");
+await campo(d, "Prazo para receber").fill(somaDias(hoje, 5));
+await salvar(d);
+checar((await d.locator(".bol-erro").textContent()).includes("Salvar de novo"), "pede para clicar de novo");
+await salvar(d);
+await fechou();
+await p.waitForSelector('.nuvem.rec.clima-nublado:has-text("Teste CPF Errado") .nao-confere', { timeout: 15000 });
+checar(true, "salvou com o aviso 'não confere'");
+
+console.log("5. previsão, grupos e selo da aba");
+await p.waitForTimeout(400);
+const prev = await p.$$eval(".bol-previsao .prev b", (b) => b.map((x) => x.textContent.trim()));
+checar(prev.join(",") === "1,1,1,0", "previsão 1 atrasado, 1 hoje, 1 em 7 dias, 0 recebidos: " + prev.join(","));
+const grupos = await p.$$eval(".bol-grupo h2", (h) => h.map((x) => x.textContent.trim()));
+checar(grupos.join(",") === "Atrasados,Vencem hoje,Próximos 7 dias", "grupos: " + grupos.join(", "));
+const tituloSelo = await p.getAttribute('.tt-aba[data-m="boletos"] .selo', "title");
+checar(tituloSelo.includes("A receber: 1 vence hoje e 1 atrasado"), "selo conta os valores a receber: " + tituloSelo);
+checar((await p.textContent(".bol-topo p")).includes("3 valores em aberto, R$ 2.850,00 a receber"), "resumo do topo: " + (await p.textContent(".bol-topo p")));
+await foto(p, "62-receber-lista");
+
+console.log("6. recebeu só uma parte: a diferença fica em aberto");
+await carla.locator("button:has-text('Marcar como recebido')").click();
+d = p.locator("dialog.bol-dlg[open]");
+await campo(d, "Valor recebido").fill("1000");
+checar((await d.locator(".rec-resto").textContent()).includes("R$ 800,00"), "oferece deixar R$ 800,00 em aberto");
+await d.locator("button:has-text('Confirmar recebimento')").click();
+await fechou();
+await p.waitForFunction(() => [...document.querySelectorAll(".nuvem.rec")].some((n) => n.textContent.includes("Carla Mendes Teste") && n.querySelector(".nuvem-valor b")?.textContent.trim() === "R$ 800,00"), null, { timeout: 15000 });
+checar((await carla.locator(".rec-prog").textContent()).includes("1 de 2 parcelas recebidas · falta R$ 800,00"), "Carla: 1 de 2, falta R$ 800,00");
+
+console.log("7. recebe duas parcelas de uma vez");
+await sol.locator("button:has-text('Marcar como recebido')").click();
+d = p.locator("dialog.bol-dlg[open]");
+checar((await d.locator(".rec-escolha label").count()) === 3, "lista as 3 parcelas em aberto");
+await d.locator(".rec-escolha label:has-text('2/3') input").check();
+checar((await d.locator(".rec-total").textContent()).trim() === "R$ 666,67", "total das duas: R$ 666,67");
+await foto(p, "63-receber-dialogo");
+await d.locator("button:has-text('Confirmar recebimento')").click();
+await fechou();
+await p.waitForFunction(() => [...document.querySelectorAll(".nuvem.rec")].some((n) => n.textContent.includes("2 de 3 parcelas recebidas")), null, { timeout: 15000 });
+checar(true, "Agência: 2 de 3 recebidas");
+await sol.locator(".rec-ver").click();
+const parc = await sol.locator(".rec-parcelas li").evaluateAll((lis) => lis.map((li) => li.querySelector(".quando").textContent.trim()));
+checar(parc[0] === "recebida hoje" && parc[1] === "recebida hoje" && parc[2].startsWith("vence em"), "detalhe das parcelas: " + parc.join(" | "));
+await foto(p, "64-receber-detalhe");
+
+console.log("8. recebidos no mês e desfazer");
+await p.click(".bol-abas button:has-text('Recebidos')");
+await p.waitForSelector(".rec-recebidos li", { timeout: 15000 });
+const resumoMes = await p.textContent(".bol-mes span");
+checar(resumoMes.includes("3 recebimentos · R$ 1.666,67"), "recebidos no mês: " + resumoMes);
+await foto(p, "65-receber-recebidos");
+await p.click('.rec-recebidos li:has-text("parcela 2/3") button:has-text("Desfazer")');
+await p.waitForFunction(() => document.querySelector(".bol-mes span")?.textContent.includes("2 recebimentos"), null, { timeout: 15000 });
+checar(true, "desfez a parcela 2/3");
+const prevSol = await p.textContent(".bol-previsao .prev.clima-sol b");
+checar(prevSol.trim() === "2", "cartão Recebidos em " + "mês: 2");
+await p.click(".bol-abas button:has-text('Em aberto')");
+
+console.log("9. editar: corrige o CPF e o nome");
+const teste = p.locator('.nuvem.rec:has-text("Teste CPF Errado")');
+await teste.locator(".bol-icone[aria-label^='Mais opções']").click();
+await p.click('.bol-menu button:has-text("Editar")');
+d = p.locator("dialog.bol-dlg[open]");
+await campo(d, "Nome do devedor").fill("Teste Editado");
+await campo(d, "CPF ou CNPJ").fill(fmtCpf(cpfFalso(77)));
+await salvar(d);
+await fechou();
+await p.waitForSelector('.nuvem.rec:has-text("Teste Editado")', { timeout: 15000 });
+checar((await p.locator('.nuvem.rec:has-text("Teste Editado") .nao-confere').count()) === 0, "sem o aviso depois de corrigir");
+
+console.log("10. busca e planilha");
+await p.fill(".bol-busca input", "xkq7");
+await p.waitForTimeout(200);
+let nomes = await p.$$eval(".nuvem.rec h3", (h) => h.map((x) => x.textContent));
+checar(nomes.join() === "Carla Mendes Teste", "busca pela referência: " + nomes.join());
+await p.fill(".bol-busca input", CNPJ.slice(0, 8));
+await p.waitForTimeout(200);
+nomes = await p.$$eval(".nuvem.rec h3", (h) => h.map((x) => x.textContent));
+checar(nomes.join() === "Agência Sol Viagens LTDA", "busca pelos números do CNPJ: " + nomes.join());
+await p.fill(".bol-busca input", "");
+const [baixa] = await Promise.all([p.waitForEvent("download"), p.click(".rec-baixar")]);
+const csvTxt = fs.readFileSync(await baixa.path(), "utf8");
+checar(baixa.suggestedFilename() === `valores-a-receber-${hoje}.csv`, "nome do arquivo: " + baixa.suggestedFilename());
+checar(csvTxt.includes("Devedor;CPF/CNPJ;Nascimento") && csvTxt.includes("Carla Mendes Teste;" + fmtCpf(CPF) + ";14/05/1990") && csvTxt.includes("2/3"), "planilha com os dados e as parcelas");
+
+console.log("11. excluir");
+await p.locator('.nuvem.rec:has-text("Teste Editado") .bol-icone[aria-label^="Mais opções"]').click();
+await p.click('.bol-menu button:has-text("Excluir")');
+await p.click('.bol-menu button:has-text("Clique de novo para excluir")');
+await p.waitForSelector('.nuvem.rec:has-text("Teste Editado")', { state: "detached", timeout: 15000 });
+checar(true, "excluiu");
+
+console.log("12. os boletos a pagar continuam lá");
+await p.click(".bol-secoes a:has-text('Boletos a pagar')");
+await p.waitForSelector(".bol-topo h1:text-is('Boletos a pagar')", { timeout: 15000 });
+checar(p.url().endsWith("#/boletos/pagar"), "endereço #/boletos/pagar");
+await p.waitForSelector('.nuvem:has-text("Aluguel da sala")', { timeout: 15000 });
+checar((await p.$$(".bol-btn.novo:has-text('Novo boleto')")).length === 1, "botão Novo boleto");
+await p.click(".bol-secoes a:has-text('A receber')");
+await p.waitForSelector(".nuvem.rec", { timeout: 15000 });
+checar(p.url().endsWith("#/boletos"), "volta para A receber");
+
+console.log("13. gravou certinho no banco");
+const docs = await listarAdmin("receber");
+const ag = docs.find((x) => x.fields.devedor.stringValue === "Agência Sol Viagens LTDA").fields;
+checar(ag.documento.stringValue === CNPJ && ag.nascimento.stringValue === "" && ag.situacao.stringValue === "aberto", "CNPJ só com números, sem nascimento");
+checar(ag.proxVenc.stringValue === mesesDepois(hoje, 1), "próximo vencimento: parcela 2");
+checar(ag.mesesRecebidos.arrayValue.values.length === 1, "mês do recebimento guardado");
+checar(p.erros.length === 0, "sem erros: " + p.erros.join(" | "));
+
+console.log("14. celular e modo escuro");
+const m = await pagina(browser, { largura: 390, altura: 844 });
+await entrar(m, "Samuel Rodrigues", pins.samuel);
+await m.goto(BASE + "#/boletos");
+await m.waitForSelector(".nuvem.rec", { timeout: 15000 });
+await m.locator('.nuvem.rec:has-text("Agência Sol") .rec-ver').click();
+await m.waitForTimeout(400);
+await foto(m, "66-receber-celular");
+checar((await m.evaluate(() => document.documentElement.scrollWidth)) <= 390, "sem rolagem para o lado no celular");
+await m.click(".bol-btn.novo");
+const dm = m.locator("dialog.bol-dlg[open]");
+await dm.waitFor();
+await campo(dm, "Valor").fill("900");
+await campo(dm, "Parcelas").fill("3");
+await campo(dm, "1ª parcela vence em").fill(hoje);
+await m.waitForTimeout(200);
+const vaza = await m.evaluate(() => { const c = document.querySelector("dialog[open] .bol-dlg-corpo"); return c.scrollWidth - c.clientWidth; });
+checar(vaza <= 0, "formulário cabe no celular (sobra " + vaza + "px)");
+await foto(m, "67-receber-celular-form");
+await dm.locator("footer button:has-text('Cancelar')").click();
+await m.click(".bol-secoes a:has-text('Boletos a pagar')");
+await m.waitForSelector(".nuvem", { timeout: 15000 });
+checar((await m.evaluate(() => document.documentElement.scrollWidth)) <= 390, "boletos a pagar sem rolagem para o lado");
+const e = await pagina(browser, { escuro: true });
+await entrar(e, "Samuel Rodrigues", pins.samuel);
+await e.goto(BASE + "#/boletos");
+await e.waitForSelector(".nuvem.rec", { timeout: 15000 });
+await e.locator('.nuvem.rec:has-text("Carla") .rec-ver').click();
+await e.waitForTimeout(400);
+await foto(e, "68-receber-escuro");
+checar(m.erros.length === 0 && e.erros.length === 0, "sem erros: " + [...m.erros, ...e.erros].join(" | "));
+
+console.log("15. João Pedro (editar) cadastra");
+const j = await pagina(browser);
+await entrar(j, "João Pedro", pins.joao);
+await j.goto(BASE + "#/boletos");
+await j.waitForSelector(".nuvem.rec", { timeout: 15000 });
+checar((await j.$$(".bol-btn.novo")).length === 1, "João Pedro pode cadastrar");
+await browser.close();
+console.log(totalFalhas() ? `${totalFalhas()} FALHA(S)` : "TUDO CERTO");
+process.exit(totalFalhas() ? 1 : 0);

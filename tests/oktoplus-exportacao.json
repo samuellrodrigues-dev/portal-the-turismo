@@ -1,0 +1,377 @@
+{
+ "origem": "controle-oktoplus",
+ "versao": 1,
+ "exportadoEm": "2026-10-29T13:11:22.415Z",
+ "funcionarios": [
+  {
+   "id": 1,
+   "nome": "Samuel",
+   "admin": true,
+   "ativo": true,
+   "aparelho": null
+  },
+  {
+   "id": 2,
+   "nome": "João Pedro",
+   "admin": false,
+   "ativo": true,
+   "aparelho": "Cell JP"
+  },
+  {
+   "id": 3,
+   "nome": "Pedro",
+   "admin": false,
+   "ativo": true,
+   "aparelho": "Cell Pedro"
+  },
+  {
+   "id": 4,
+   "nome": "Denise",
+   "admin": false,
+   "ativo": true,
+   "aparelho": "Cell Deni"
+  },
+  {
+   "id": 5,
+   "nome": "Débora",
+   "admin": false,
+   "ativo": true,
+   "aparelho": "Cell Deb"
+  },
+  {
+   "id": 6,
+   "nome": "Lívia",
+   "admin": false,
+   "ativo": true,
+   "aparelho": "Cell Lívia"
+  },
+  {
+   "id": 7,
+   "nome": "Bárbara",
+   "admin": false,
+   "ativo": false,
+   "aparelho": "Cell Bárbara"
+  },
+  {
+   "id": 8,
+   "nome": "Alan",
+   "admin": false,
+   "ativo": true,
+   "aparelho": null
+  }
+ ],
+ "contas": [
+  {
+   "id": 1,
+   "titular": "João Pedro",
+   "final_cpf": "02",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 2,
+   "titular": "Isolina",
+   "final_cpf": "91",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 3,
+   "titular": "Maria O.",
+   "final_cpf": "99",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 4,
+   "titular": "Denise",
+   "final_cpf": "75",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 5,
+   "titular": "Débora",
+   "final_cpf": "28",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": "2026-10",
+   "esgotada_por": 5,
+   "esgotada_em": "2026-10-22T14:00:00.000Z",
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 6,
+   "titular": "Leda",
+   "final_cpf": "87",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": "2026-10",
+   "esgotada_por": 4,
+   "esgotada_em": "2026-10-20T21:30:00.000Z",
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 7,
+   "titular": "Hudson",
+   "final_cpf": "68",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 8,
+   "titular": "Débora",
+   "final_cpf": "41",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 9,
+   "titular": "Lívia",
+   "final_cpf": "46",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 10,
+   "titular": "Maria Moura",
+   "final_cpf": "00",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 11,
+   "titular": "Denise",
+   "final_cpf": "53",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 12,
+   "titular": "João Victor",
+   "final_cpf": "59",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 13,
+   "titular": "Francisco",
+   "final_cpf": "20",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 14,
+   "titular": "Alexandre",
+   "final_cpf": "27",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 15,
+   "titular": "Sandra",
+   "final_cpf": "53",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 16,
+   "titular": "Filipe Mendes",
+   "final_cpf": "01",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  },
+  {
+   "id": 17,
+   "titular": "Eliene",
+   "final_cpf": "04",
+   "obs": null,
+   "ativa": true,
+   "esgotada_mes": null,
+   "esgotada_por": null,
+   "esgotada_em": null,
+   "criado_em": "2026-10-29T13:10:55.931Z"
+  }
+ ],
+ "usos": [
+  {
+   "id": 1,
+   "conta_id": 2,
+   "funcionario_id": 6,
+   "aparelho": "Cell Lívia",
+   "inicio": "2026-10-10T13:00:00.000Z",
+   "fim": "2026-10-10T15:00:00.000Z",
+   "fim_tipo": "devolvida",
+   "fim_por": 6
+  },
+  {
+   "id": 2,
+   "conta_id": 4,
+   "funcionario_id": 8,
+   "aparelho": "Cell Alan",
+   "inicio": "2026-09-30T23:00:00.000Z",
+   "fim": "2026-10-01T12:00:00.000Z",
+   "fim_tipo": "devolvida",
+   "fim_por": 8
+  },
+  {
+   "id": 3,
+   "conta_id": 6,
+   "funcionario_id": 4,
+   "aparelho": "Cell Denise",
+   "inicio": "2026-10-20T11:00:00.000Z",
+   "fim": "2026-10-20T21:30:00.000Z",
+   "fim_tipo": "esgotou",
+   "fim_por": 4
+  },
+  {
+   "id": 4,
+   "conta_id": 3,
+   "funcionario_id": 3,
+   "aparelho": "Cell Pedro",
+   "inicio": "2026-10-28T12:00:00.000Z",
+   "fim": null,
+   "fim_tipo": null,
+   "fim_por": null
+  }
+ ],
+ "eventos": [
+  {
+   "id": 1,
+   "em": "2026-10-29T13:10:55.931Z",
+   "tipo": "carga_inicial",
+   "conta_id": null,
+   "funcionario_id": null,
+   "alvo_id": null,
+   "detalhe": "8 pessoas, 17 contas livres"
+  },
+  {
+   "id": 2,
+   "em": "2026-10-10T13:00:00.000Z",
+   "tipo": "pegou",
+   "conta_id": 2,
+   "funcionario_id": 6,
+   "alvo_id": null,
+   "detalhe": "Cell Lívia"
+  },
+  {
+   "id": 3,
+   "em": "2026-10-10T15:00:00.000Z",
+   "tipo": "devolveu",
+   "conta_id": 2,
+   "funcionario_id": 6,
+   "alvo_id": null,
+   "detalhe": null
+  },
+  {
+   "id": 4,
+   "em": "2026-09-30T23:00:00.000Z",
+   "tipo": "pegou",
+   "conta_id": 4,
+   "funcionario_id": 8,
+   "alvo_id": null,
+   "detalhe": "Cell Alan"
+  },
+  {
+   "id": 5,
+   "em": "2026-10-01T12:00:00.000Z",
+   "tipo": "devolveu",
+   "conta_id": 4,
+   "funcionario_id": 8,
+   "alvo_id": null,
+   "detalhe": null
+  },
+  {
+   "id": 6,
+   "em": "2026-10-20T11:00:00.000Z",
+   "tipo": "pegou",
+   "conta_id": 6,
+   "funcionario_id": 4,
+   "alvo_id": null,
+   "detalhe": "Cell Denise"
+  },
+  {
+   "id": 7,
+   "em": "2026-10-20T21:30:00.000Z",
+   "tipo": "esgotou",
+   "conta_id": 6,
+   "funcionario_id": 4,
+   "alvo_id": null,
+   "detalhe": null
+  },
+  {
+   "id": 8,
+   "em": "2026-10-22T14:00:00.000Z",
+   "tipo": "esgotou",
+   "conta_id": 5,
+   "funcionario_id": 5,
+   "alvo_id": null,
+   "detalhe": null
+  },
+  {
+   "id": 9,
+   "em": "2026-10-28T12:00:00.000Z",
+   "tipo": "pegou",
+   "conta_id": 3,
+   "funcionario_id": 3,
+   "alvo_id": null,
+   "detalhe": "Cell Pedro"
+  }
+ ]
+}

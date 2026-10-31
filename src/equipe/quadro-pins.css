@@ -1,0 +1,85 @@
+/* ═══════════════ Quadro "PINs para entregar" ═══════════════
+   Cartão escuro da marca, preso no canto da tela em qualquer aba. */
+.qp {
+  position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 60;
+  width: min(380px, calc(100vw - 24px)); max-height: min(70vh, 620px); display: flex; flex-direction: column;
+  background: #15181D; color: #EEF0F2; border-radius: 18px; border: 1px solid rgba(242, 183, 5, .28);
+  box-shadow: 0 30px 70px -28px rgba(0, 0, 0, .75), 0 0 0 1px rgba(0, 0, 0, .2);
+  background-image: radial-gradient(420px 160px at 100% 0%, rgba(242, 183, 5, .13), transparent 70%);
+  animation: qp-entra .32s cubic-bezier(.2, .9, .3, 1.15);
+}
+@keyframes qp-entra { from { transform: translateY(18px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.qp-cab { display: flex; align-items: flex-start; gap: 12px; padding: 16px 14px 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.qp-cab > div { flex: 1; min-width: 0; }
+.qp-cab h2 { margin: 0; font: 700 19px/1.15 var(--tt-cond); letter-spacing: .02em; color: var(--tt-ouro); }
+.qp-cab p { margin: 4px 0 0; font-size: 13px; line-height: 1.4; color: #A9B0B9; }
+.qp-icone { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 11px; background: rgba(242, 183, 5, .14); color: var(--tt-ouro); }
+.qp svg, .qp-pilula svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.qp-min { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .1); background: rgba(255, 255, 255, .04); color: #C8CDD3; }
+.qp-min:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.qp-min svg { width: 17px; height: 17px; }
+
+.qp-lista { list-style: none; margin: 0; padding: 6px 8px; overflow: auto; flex: 1; min-height: 0; }
+.qp-lista li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 10px;
+  padding: 9px 8px; border-radius: 12px;
+}
+.qp-lista li + li { border-top: 1px solid rgba(255, 255, 255, .06); }
+.qp-lista li.novo { animation: qp-destaque 4.5s ease-out; }
+@keyframes qp-destaque { 0%, 55% { background: rgba(242, 183, 5, .16); } 100% { background: transparent; } }
+.qp-av { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #0E1013; color: var(--tt-ouro); font: 700 13px/1 var(--tt-cond); letter-spacing: .04em; box-shadow: inset 0 0 0 1px rgba(242, 183, 5, .3); }
+.qp-nome { font-weight: 600; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qp-pin { font: 700 23px/1 var(--tt-sans); letter-spacing: .16em; font-variant-numeric: tabular-nums; color: #fff; padding: 6px 4px 6px 10px; border-radius: 9px; background: rgba(0, 0, 0, .3); }
+.qp-anotei {
+  display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 10px; border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .05); color: #DADDE1; font-weight: 600; font-size: 13px;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.qp-anotei svg { width: 15px; height: 15px; stroke-width: 2.4; }
+.qp-anotei:hover { background: rgba(76, 197, 143, .16); border-color: rgba(76, 197, 143, .5); color: #7BE0AF; }
+
+.qp-rodape { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px 14px; border-top: 1px solid rgba(255, 255, 255, .08); }
+.qp-rodape .tt-btn { min-height: 38px; padding: 0 12px; font-size: 13.5px; background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .12); color: #EEF0F2; }
+.qp-rodape .tt-btn:hover { background: rgba(255, 255, 255, .12); }
+.qp-rodape .tt-btn:last-child { margin-left: auto; background: var(--tt-ouro); border-color: var(--tt-ouro); color: #1A1400; }
+.qp-rodape .tt-btn.armado { background: #B0362A; border-color: #B0362A; color: #fff; }
+
+.qp-pilula {
+  position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 60;
+  display: inline-flex; align-items: center; gap: 9px; height: 48px; padding: 0 18px 0 14px; border-radius: 999px;
+  border: 1px solid rgba(242, 183, 5, .5); background: #15181D; color: #F6D36B; font-weight: 700; font-size: 14.5px;
+  box-shadow: 0 18px 40px -16px rgba(0, 0, 0, .7);
+}
+/* anel dourado que pulsa (só transform e opacidade: leve para o computador) */
+.qp-pilula::after {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; border: 2px solid rgba(242, 183, 5, .55);
+  pointer-events: none; animation: qp-chama 2.6s ease-out infinite; will-change: transform, opacity;
+}
+.qp-pilula:hover { background: #1E2228; }
+@keyframes qp-chama { 0% { transform: scale(1); opacity: .9; } 70%, 100% { transform: scale(1.12, 1.35); opacity: 0; } }
+
+@media (max-width: 560px) {
+  .qp { left: 12px; right: 12px; width: auto; bottom: calc(12px + env(safe-area-inset-bottom)); max-height: 62vh; }
+  .qp-pin { font-size: 21px; letter-spacing: .12em; }
+  .qp-anotei { padding: 0 9px; }
+  .qp-pilula { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) { .qp, .qp-pilula::after, .qp-lista li.novo { animation: none; } }
+
+/* imprimir só o quadro (quando o pedido vem do botão Imprimir dele) */
+@media print {
+  .qp, .qp-pilula { display: none !important; }
+  body[data-imprimir="pins"] .tt-app > :not(.qp) { display: none !important; }
+  body[data-imprimir="pins"] .qp {
+    display: block !important; position: static; width: auto; max-height: none; box-shadow: none; border: 0; animation: none;
+    background: #fff; color: #000;
+  }
+  body[data-imprimir="pins"] .qp-cab h2 { color: #000; font-size: 24px; }
+  body[data-imprimir="pins"] .qp-cab p, body[data-imprimir="pins"] .qp-icone, body[data-imprimir="pins"] .qp-min,
+  body[data-imprimir="pins"] .qp-anotei, body[data-imprimir="pins"] .qp-rodape { display: none !important; }
+  body[data-imprimir="pins"] .qp-lista { overflow: visible; }
+  body[data-imprimir="pins"] .qp-lista li { border-top: 1px solid #ccc; }
+  body[data-imprimir="pins"] .qp-av { background: #fff; color: #000; box-shadow: inset 0 0 0 1px #000; }
+  body[data-imprimir="pins"] .qp-pin { color: #000; background: none; font-size: 26px; }
+}

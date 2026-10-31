@@ -1,0 +1,29 @@
+# Robô de promoções: roda sozinho a cada 2 horas no GitHub (grátis) e grava no banco do portal.
+# Precisa do segredo FIREBASE_SERVICE_ACCOUNT (Settings → Secrets and variables → Actions).
+# Opcionais: SERPAPI_KEY e TRAVELPAYOUTS_TOKEN (radar de preços saindo de Teresina).
+name: Promoções de passagens e milhas
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"   # a cada 2 horas, aos 17 minutos (horário UTC)
+  workflow_dispatch:          # botão "Run workflow" para rodar na hora
+
+concurrency:
+  group: promocoes
+  cancel-in-progress: false
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Ler as fontes e gravar no portal
+        run: node robo/promocoes.mjs
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}

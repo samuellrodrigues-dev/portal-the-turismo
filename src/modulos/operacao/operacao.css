@@ -1,0 +1,14 @@
+.op-pag { display: grid; place-items: start center; padding-top: 48px; }
+.op-cartao {
+  display: grid; grid-template-columns: auto 1fr; gap: 22px; width: min(680px, 100%);
+  padding: 30px; border-radius: 22px; background: #15181D; color: #EEF0F2;
+  box-shadow: 0 30px 70px -40px rgba(0, 0, 0, .7); border: 1px solid rgba(242, 183, 5, .18);
+  background-image: radial-gradient(500px 220px at 100% 0%, rgba(242, 183, 5, .14), transparent 70%);
+}
+.op-selo { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 16px; background: rgba(242, 183, 5, .12); color: var(--tt-ouro); }
+.op-selo svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+.op-texto h1 { margin: 0; font: 700 30px/1.05 var(--tt-cond); letter-spacing: .01em; }
+.op-texto p { margin: 8px 0 14px; color: #B8BEC6; font-size: 15.5px; }
+.op-texto ul { margin: 0 0 22px; padding-left: 18px; color: #9AA1AB; font-size: 14.5px; display: grid; gap: 4px; }
+.op-btn { min-height: 48px; font-size: 15.5px; padding: 0 20px; }
+@media (max-width: 560px) { .op-cartao { grid-template-columns: 1fr; padding: 24px 20px; } .op-pag { padding-top: 24px; } }

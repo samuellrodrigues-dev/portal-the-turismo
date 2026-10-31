@@ -1,0 +1,58 @@
+<div id="app"><div class="carregando">Carregando…</div></div>
+<datalist id="lista-aeroportos"></datalist>
+<datalist id="lista-atendentes"></datalist>
+
+<!-- Cadastro / edição de emissão -->
+<dialog id="dlg" aria-labelledby="dlg-titulo">
+  <form id="form" novalidate>
+    <header class="dlg-topo">
+      <h2 id="dlg-titulo">Nova emissão</h2>
+      <button type="button" class="icone" data-fechar aria-label="Fechar"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </header>
+    <div class="dlg-corpo">
+      <section class="colar" id="f-colar">
+        <label class="colar-rotulo" for="f-texto">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 14l2 2 4-4"/></svg>
+          <span><b>Colar emissão do WhatsApp</b>O formulário se preenche sozinho. Depois é só conferir e ajustar o que precisar.</span>
+        </label>
+        <textarea id="f-texto" rows="3" placeholder="Cole aqui o texto da emissão (Ctrl+V ou Cmd+V)"></textarea>
+        <div class="colar-acoes"><button type="button" class="btn-sec" id="f-ler">Preencher com este texto</button></div>
+      </section>
+      <div class="lido" id="f-lido" role="status" hidden></div>
+      <div class="campos-2">
+        <label class="campo"><span>Cliente</span>
+          <input id="f-cliente" maxlength="120" autocomplete="off" placeholder="Nome do passageiro ou da família">
+        </label>
+        <label class="campo"><span>Contato <em>opcional</em></span>
+          <input id="f-contato" maxlength="120" autocomplete="off" placeholder="(86) 9 0000-0000 ou e-mail">
+        </label>
+      </div>
+      <div class="campos-2 segunda">
+        <label class="campo"><span>Atendente <em>opcional</em></span>
+          <input id="f-atendente" maxlength="60" autocomplete="off" list="lista-atendentes" placeholder="Quem vendeu">
+        </label>
+        <label class="campo"><span>Valor da sala VIP <em>opcional</em></span>
+          <input id="f-valor" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00">
+        </label>
+      </div>
+      <div class="usos-topo">
+        <h3>Datas de uso</h3>
+        <p>Cada data entra na lista de emissão da véspera.</p>
+      </div>
+      <div id="f-usos"></div>
+      <button type="button" class="btn-sec" id="f-add"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Adicionar outra data</button>
+      <label class="campo"><span>Observações <em>opcional</em></span>
+        <textarea id="f-obs" maxlength="500" rows="2" placeholder="Ex.: cartão do cliente, sala preferida, conexão longa"></textarea>
+      </label>
+      <p class="form-erro" id="f-erro" role="alert" hidden></p>
+    </div>
+    <footer class="dlg-rodape">
+      <button type="button" class="btn-perigo" id="f-excluir" hidden>Excluir emissão</button>
+      <span class="espaco"></span>
+      <button type="button" class="btn-sec" data-fechar>Cancelar</button>
+      <button type="submit" class="btn" id="f-salvar">Salvar emissão</button>
+    </footer>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>

@@ -1,0 +1,241 @@
+/* Visual do Controle Oktoplus (o mesmo do site antigo), limitado à aba */
+.okto {
+  color-scheme: light;
+  --bg: #f6f5f2;
+  --card: #ffffff;
+  --soft: #efeee9;
+  --ink: #1a1a18;
+  --muted: #6b6a64;
+  --line: #e2e0d9;
+  --pri: #1a1a18;
+  --pri-ink: #ffffff;
+  --livre: #13784f;
+  --livre-bg: #e2f2ea;
+  --uso: #2153b8;
+  --uso-bg: #e7eefb;
+  --emp: #8f5300;
+  --emp-bg: #fbeed6;
+  --esg: #b0362a;
+  --esg-bg: #f9e4e1;
+  --raio: 12px;
+  --sombra: 0 1px 2px rgba(26, 26, 24, .05);
+  --fonte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  .okto {
+    color-scheme: dark;
+    --bg: #151514;
+    --card: #1e1e1c;
+    --soft: #272725;
+    --ink: #f1f0ec;
+    --muted: #a6a59e;
+    --line: #34332f;
+    --pri: #f1f0ec;
+    --pri-ink: #151514;
+    --livre: #4cc58f;
+    --livre-bg: #17322a;
+    --uso: #7da6f5;
+    --uso-bg: #1c2740;
+    --emp: #f0b35a;
+    --emp-bg: #3a2b14;
+    --esg: #f0817a;
+    --esg-bg: #3c1e1b;
+    --sombra: none;
+  }
+}
+
+.okto { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--fonte); min-height: calc(100dvh - 60px); }
+@media (max-width: 760px) { .okto { min-height: calc(100dvh - 106px); } }
+.okto a { color: inherit; }
+.okto :focus-visible { outline: 2px solid var(--uso); outline-offset: 2px; }
+.okto h1, .okto h2 { margin: 0; }
+
+/* ---------- página ---------- */
+.okto .pag { max-width: 760px; margin: 0 auto; padding: 16px 16px 96px; }
+.okto .pag.larga { max-width: 1100px; }
+.okto .pag.estreita { max-width: 480px; }
+.okto .bloco { margin-top: 24px; }
+.okto .tit { font-size: 16px; font-weight: 650; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.okto h1.tit { font-size: 20px; }
+.okto .cont { font-size: 12.5px; font-weight: 600; color: var(--muted); background: var(--soft); border-radius: 999px; padding: 1px 8px; }
+.okto .dica { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
+.okto .vazio { margin: 0; padding: 14px; border: 1px dashed var(--line); border-radius: var(--raio); color: var(--muted); font-size: 14px; text-align: center; }
+
+/* ---------- resumo ---------- */
+.okto .resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.okto .resumo.r4 { grid-template-columns: repeat(4, 1fr); }
+.okto .kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--raio); padding: 10px 12px; box-shadow: var(--sombra); }
+.okto .kpi b { display: block; font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.okto .kpi span { font-size: 12.5px; color: var(--muted); }
+.okto .kpi.livre b { color: var(--livre); }
+.okto .kpi.uso b { color: var(--uso); }
+.okto .kpi.esg b { color: var(--esg); }
+
+/* ---------- listas de contas ---------- */
+.okto .lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.okto .item {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--raio); padding: 12px 14px; box-shadow: var(--sombra);
+}
+.okto .item.meu { border-color: color-mix(in srgb, var(--uso) 45%, var(--line)); background: var(--uso-bg); }
+.okto .item.esg .conta-nome { color: var(--muted); }
+.okto .item.inativa { opacity: .55; }
+.okto .item-t { flex: 1 1 210px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.okto .item-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.okto .item-a:has(.pegar), .okto .item-a:has(.pin-novo) { flex-basis: 100%; }
+.okto .item.col { align-items: flex-start; }
+.okto .conta-nome { font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.okto .final { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 6px; letter-spacing: .02em; }
+.okto .det { font-size: 13px; color: var(--muted); }
+.okto .det b { color: var(--ink); font-weight: 600; }
+.okto .obs { font-style: italic; }
+.okto .nw { white-space: nowrap; }
+.okto .tag { display: inline-block; font-style: normal; font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.okto .tag.emp { background: var(--emp-bg); color: var(--emp); }
+.okto .tag.sua { background: var(--livre-bg); color: var(--livre); margin-left: 0; }
+.okto .tag.uso { background: var(--uso-bg); color: var(--uso); margin-left: 0; }
+
+/* ---------- botões ---------- */
+.okto .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--card); color: var(--ink); font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: background .12s, border-color .12s;
+}
+.okto .btn:hover { border-color: color-mix(in srgb, var(--ink) 30%, var(--line)); }
+.okto .btn:disabled { opacity: .6; cursor: progress; }
+.okto .btn.pri { background: var(--pri); color: var(--pri-ink); border-color: var(--pri); }
+.okto .btn.aviso { color: var(--esg); }
+.okto .btn.armado { background: var(--esg); border-color: var(--esg); color: #fff; }
+.okto .btn.grande { width: 100%; min-height: 48px; font-size: 16px; }
+.okto .btn.fantasma { visibility: hidden; }
+.okto .acao { margin: 0; }
+
+/* ---------- formulários ---------- */
+.okto .form { display: grid; gap: 12px; }
+.okto .form.grade { grid-template-columns: 1fr 1fr; margin-top: 12px; }
+.okto .form.grade > .campo.largo, .okto .form.grade > .linha, .okto .form.grade > .msg, .okto .form.grade > .pin-novo { grid-column: 1 / -1; }
+.okto .campo { display: grid; gap: 4px; }
+.okto .campo > span { font-size: 13px; color: var(--muted); font-weight: 500; }
+.okto .campo input, .okto .campo select {
+  width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card);
+  font-size: 16px;
+}
+.okto .campo input:focus, .okto .campo select:focus { border-color: var(--uso); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--uso) 22%, transparent); }
+.okto input.pin { font-size: 22px; letter-spacing: .35em; text-align: center; font-variant-numeric: tabular-nums; }
+.okto .chk { display: flex; align-items: center; gap: 8px; font-size: 14px; min-height: 44px; }
+.okto .chk input { width: 18px; height: 18px; accent-color: var(--pri); }
+.okto .linha { display: flex; flex-wrap: wrap; gap: 8px; }
+.okto .msg { margin: 0; font-size: 14px; padding: 8px 12px; border-radius: 10px; }
+.okto .msg.ok { background: var(--livre-bg); color: var(--livre); }
+.okto .msg.erro { background: var(--esg-bg); color: var(--esg); }
+.okto .nota { margin: 0; font-size: 13.5px; background: var(--soft); border-radius: 10px; padding: 10px 12px; }
+.okto .pegar { width: 100%; display: grid; gap: 10px; padding-top: 4px; border-top: 1px solid var(--line); margin-top: 2px; padding-top: 12px; }
+.okto .pin-novo { margin-top: 8px; display: grid; gap: 2px; justify-items: start; background: var(--livre-bg); color: var(--ink); border-radius: 10px; padding: 10px 14px; }
+.okto .pin-novo span { font-size: 13px; color: var(--muted); }
+.okto .pin-novo b { font-size: 30px; letter-spacing: .25em; font-variant-numeric: tabular-nums; color: var(--livre); }
+.okto .pin-novo small { font-size: 12.5px; color: var(--muted); }
+
+/* ---------- admin ---------- */
+.okto details.edit { flex: 1 1 260px; min-width: 0; }
+.okto details.edit > summary { list-style: none; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.okto details.edit > summary::-webkit-details-marker { display: none; }
+.okto .editar { font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; padding-top: 2px; }
+.okto details.edit[open] .editar { visibility: hidden; }
+.okto details.novo { margin-top: 10px; }
+.okto details.novo > summary { list-style: none; width: fit-content; }
+.okto details.novo > summary::-webkit-details-marker { display: none; }
+.okto details.novo[open] { background: var(--card); border: 1px solid var(--line); border-radius: var(--raio); padding: 12px 14px; }
+.okto details.novo[open] > summary { margin-bottom: 4px; }
+
+/* ---------- histórico ---------- */
+.okto .mes-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.okto .mes-nav h1 { flex: 1; text-align: center; font-size: 19px; }
+.okto .tabela-w { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: var(--raio); }
+.okto .tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.okto .tabela th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--soft); }
+.okto .tabela th, .okto .tabela td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.okto .tabela tr:last-child td { border-bottom: 0; }
+.okto .tabela .n { text-align: right; font-variant-numeric: tabular-nums; }
+.okto .tabela .nw { white-space: nowrap; }
+.okto .tabela .tag { margin-left: 6px; }
+.okto .registro { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--raio); }
+.okto .registro li { display: flex; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.okto .registro li:last-child { border-bottom: 0; }
+.okto .registro time { flex: 0 0 92px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- telas pequenas ---------- */
+@media (max-width: 560px) {
+  .okto .resumo.r4 { grid-template-columns: 1fr 1fr; }
+  .okto .form.grade { grid-template-columns: 1fr; }
+  .okto .registro li { flex-direction: column; gap: 0; }
+  .okto .registro time { flex: none; font-size: 12px; }
+  .okto .mes-nav h1 { font-size: 17px; }
+}
+@media (max-width: 380px) {
+  .okto .nomes { grid-template-columns: 1fr; }
+  .okto .kpi b { font-size: 22px; }
+}
+
+/* ---------- topo da aba (no lugar da barra do site antigo) ---------- */
+.okto .okto-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; padding-top: 6px; }
+.okto .okto-topo h1 { font-size: 21px; font-weight: 700; letter-spacing: -.01em; }
+.okto .okto-topo p { margin: 2px 0 0; font-size: 13.5px; color: var(--muted); }
+.okto .okto-nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.okto .okto-nav a { padding: 7px 11px; border-radius: 8px; text-decoration: none; font-size: 14px; color: var(--muted); }
+.okto .okto-nav a:hover { background: var(--soft); color: var(--ink); }
+.okto .okto-nav a.on { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--line); }
+.okto .okto-topo + .resumo, .okto .okto-topo + .bloco, .okto .okto-topo + .mes-nav, .okto .okto-topo + .vazio { margin-top: 18px; }
+.okto .vazio a { color: var(--ink); font-weight: 600; }
+
+/* ---------- logins (CPF, senha, e-mail) ---------- */
+.okto .topo-dica { margin: 14px 0 0; }
+.okto .busca { margin-top: 12px; }
+.okto .busca input { min-height: 44px; }
+.okto .creds { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.35fr); gap: 8px; width: 100%; }
+.okto .cred { display: grid; gap: 3px; min-width: 0; padding: 8px 10px; border-radius: 10px; background: var(--soft); }
+.okto .cred-r { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.okto .cred-v { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.okto .cred-v code {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 600 14.5px/1.3 ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--ink); user-select: all;
+}
+.okto .cred-v code.oculto { letter-spacing: .12em; user-select: none; }
+.okto .cred-nada { color: var(--muted); }
+.okto .ico {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid transparent;
+  background: none; color: var(--muted); cursor: pointer; transition: background .12s, color .12s, border-color .12s;
+}
+.okto .ico:hover { background: var(--card); color: var(--ink); border-color: var(--line); }
+.okto .ico:active { transform: scale(.94); }
+.okto .ico svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.okto .item.meu .cred { background: color-mix(in srgb, var(--card) 70%, transparent); }
+.okto .login-conta { flex-basis: 100%; display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--uso) 25%, var(--line)); }
+.okto .login-tit { font-size: 12.5px; font-weight: 600; color: var(--uso); }
+.okto .login-falta { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--muted); }
+.okto .login-falta a { color: var(--ink); font-weight: 600; }
+.okto .item.login { gap: 10px; }
+.okto .login-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 2px; width: 100%; }
+.okto .login-cab .tag { margin-left: 6px; }
+.okto .tag.esg { background: var(--esg-bg); color: var(--esg); }
+.okto .login-adm { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 14px; width: 100%; }
+.okto .login-adm details.edit { flex: 1 1 260px; }
+.okto .login-adm details.edit > summary { padding-top: 10px; }
+.okto .login-adm .btn { margin-left: auto; }
+.okto .login .det.obs { margin: 0; width: 100%; }
+.okto details.colar { margin-top: 10px; }
+.okto details.colar[open] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.okto details.colar .dica { margin: 0; }
+.okto textarea {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font: 13.5px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace; resize: vertical;
+}
+.okto textarea:focus { border-color: var(--uso); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--uso) 22%, transparent); }
+.okto .tabela.previa td { font-size: 13px; }
+.okto .tabela.previa th, .okto .tabela.previa td { padding: 7px 8px; }
+.okto .tabela.previa td.vai { min-width: 140px; }
+.okto .tabela.previa td.email { overflow-wrap: anywhere; min-width: 120px; }
+.okto .tabela.previa .tag { margin-left: 6px; }
+@media (max-width: 640px) {
+  .okto .creds { grid-template-columns: 1fr; }
+}
