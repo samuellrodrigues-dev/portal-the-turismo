@@ -6,7 +6,12 @@ import { navegador, pagina, entrar, sair, foto, checar, totalFalhas, BASE, OUT, 
 import { pinsDoQuadro } from "./util.mjs";
 
 const pins = JSON.parse(fs.readFileSync(path.join(OUT, "pins.json"), "utf8"));
-const arquivo = path.join(path.dirname(new URL(import.meta.url).pathname), "oktoplus-exportacao.json");
+// as contas esgotadas do arquivo de exemplo são de outubro de 2026: passam para o mês corrente,
+// senão o teste quebra quando o mês vira (esgotada só vale no próprio mês)
+const original = path.join(path.dirname(new URL(import.meta.url).pathname), "oktoplus-exportacao.json");
+const hoje = new Date(), mesCorrente = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
+const arquivo = path.join(OUT, "oktoplus-exportacao.json");
+fs.writeFileSync(arquivo, fs.readFileSync(original, "utf8").replaceAll('"esgotada_mes": "2026-10"', `"esgotada_mes": "${mesCorrente}"`));
 const browser = await navegador();
 const p = await pagina(browser);
 
@@ -87,6 +92,28 @@ await p.click("#h-comigo + .lista button:has-text('Esgotou')");
 await p.click("#h-comigo + .lista button:has-text('Confirmar: esgotou?')");
 await p.waitForFunction(() => document.querySelectorAll(".okto .resumo .kpi b")[2]?.textContent.trim() === "3", null, { timeout: 15000 });
 checar(true, "marcou esgotada (3 esgotadas)");
+// Gerenciar contas: liberado para toda a equipe da Oktoplus (sem Liberar a conta de outra pessoa)
+await p.goto(BASE + "#/oktoplus/gerenciar");
+await p.waitForSelector("#h-contas", { timeout: 15000 });
+checar((await p.$$eval(".okto-nav a", (a) => a.map((x) => x.textContent))).join(",") === "Contas,Logins,Gerenciar contas", "Pedro vê Gerenciar contas no menu");
+checar(!(await p.$(".okto .item-a button:has-text('Liberar')")), "Pedro não vê Liberar");
+// conta em uso: quem não administra não desativa (desativar tiraria a conta de quem está usando)
+const [travada, emUso] = await p.$$eval(".okto details.edit", (ds) => [
+  ds.filter((d) => d.querySelector("input[type=checkbox]")?.disabled).length,
+  ds.filter((d) => / com /.test(" " + d.querySelector(".det")?.textContent)).length,
+]);
+checar(travada === emUso, `contas em uso travadas para desativar: ${travada} de ${emUso}`);
+await p.click("summary:has-text('Adicionar conta')");
+await p.fill("details.novo input[placeholder='Nome da pessoa da conta']", "Conta nova do Pedro");
+await p.fill("details.novo input[placeholder='Ex.: 75']", "33");
+await p.click("details.novo button:has-text('Cadastrar conta')");
+await p.waitForSelector("details.novo .msg.ok", { timeout: 15000 });
+checar((await p.textContent("details.novo .msg.ok")).includes("Conta nova do Pedro cadastrada"), "Pedro cadastrou uma conta");
+await p.waitForFunction(() => [...document.querySelectorAll(".okto .lista .item")].some((li) => li.textContent.includes("Conta nova do Pedro")), null, { timeout: 15000 });
+checar(true, "a conta nova aparece na lista");
+await foto(p, "14b-oktoplus-pedro-gerenciar");
+await p.goto(BASE + "#/oktoplus");
+await p.waitForSelector(".okto .resumo", { timeout: 15000 });
 const abasP = await p.$$eval(".tt-aba", (els) => els.map((e) => e.textContent.trim()));
 checar(abasP.join(",") === "Oktoplus,Passagens,Milhas" && !(await p.$("text=Histórico")), "Pedro vê Oktoplus e as promoções, e não vê o histórico: " + abasP.join(","));
 checar(p.erros.length === 0, "sem erros: " + p.erros.join(" | "));
@@ -99,6 +126,7 @@ await p.waitForSelector("#h-reg", { timeout: 15000 });
 await p.waitForTimeout(1000);
 const reg = await p.textContent(".registro");
 checar(reg.includes("Pedro devolveu") && reg.includes("Pedro pegou") && /Pedro marcou .* como esgotada/.test(reg) && reg.includes("trouxe os dados do site antigo"), "registro com devolveu, pegou, esgotou e a importação");
+checar(reg.includes("Pedro cadastrou a conta Conta nova do Pedro"), "registro mostra a conta que o Pedro cadastrou");
 fs.writeFileSync(path.join(OUT, "pins2.json"), JSON.stringify(Object.fromEntries(pinsNovos)));
 checar(p.erros.length === 0, "sem erros: " + p.erros.join(" | "));
 await browser.close();

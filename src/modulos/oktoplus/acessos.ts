@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
    Logins (CPF, senha e e-mail) das contas Oktoplus e de outros
    sistemas da agência. Ficam em okto_acessos: toda a equipe da
-   Oktoplus lê; só quem administra a Oktoplus cadastra, edita e apaga
-   (garantido nas regras do Firestore, não só na tela).
+   Oktoplus lê, cadastra e corrige; só quem administra a Oktoplus apaga
+   e cola a planilha inteira (garantido nas regras do Firestore, não só na tela).
    Nada disso fica no código do site.
    ═══════════════════════════════════════════════════════════════ */
 import {
@@ -85,7 +85,7 @@ export function useAcessos() {
   return { acessos, erro };
 }
 
-/* ─── gravação (administrador da Oktoplus) ─── */
+/* ─── gravação (cadastrar e corrigir: toda a equipe da Oktoplus; apagar: administrador) ─── */
 function limpar(v: NovoAcesso) {
   return {
     nome: limparNome(v.nome).slice(0, 60),

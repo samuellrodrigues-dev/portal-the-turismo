@@ -65,14 +65,42 @@ const comOutro = contas.find((x) => x.uso && x.uso.pid !== euL.pid);
 const livre = contas.find((x) => !x.uso && x.ativa);
 if (comOutro) checar(!(await pode(() => updateDoc(doc(c.db, "okto_contas", comOutro.id), { uso: null }))), "não devolve conta que está com outra pessoa");
 checar(!(await pode(() => updateDoc(doc(c.db, "okto_contas", livre.id), { uso: { id: "x", pid: "outra", nome: "Outra", aparelho: "", inicio: serverTimestamp() } }))), "não pega conta em nome de outra pessoa");
-checar(!(await pode(() => updateDoc(doc(c.db, "okto_contas", livre.id), { titular: "Mudado" }))), "não edita a conta");
+// Gerenciar contas: toda a equipe da Oktoplus cadastra e corrige contas
+const contaLivre = { titular: livre.titular, final: String(livre.final ?? ""), obs: livre.obs || "", ativa: true };
+checar(await pode(() => updateDoc(doc(c.db, "okto_contas", livre.id), { ...contaLivre, obs: "corrigida pela Lívia" })), "corrige a observação de uma conta");
+checar(await pode(() => updateDoc(doc(c.db, "okto_contas", livre.id), contaLivre)), "volta a observação");
+checar(!(await pode(() => updateDoc(doc(c.db, "okto_contas", livre.id), { ...contaLivre, titular: "" }))), "não deixa conta sem nome");
+checar(!(await pode(() => updateDoc(doc(c.db, "okto_contas", livre.id), { ...contaLivre, extra: 1 }))), "não grava campo fora do combinado na conta");
+if (comOutro) checar(!(await pode(() => updateDoc(doc(c.db, "okto_contas", comOutro.id), { titular: comOutro.titular, final: String(comOutro.final ?? ""), obs: comOutro.obs || "", ativa: false }))), "não desativa conta que está com outra pessoa");
+if (comOutro) checar(!(await pode(() => updateDoc(doc(c.db, "okto_contas", comOutro.id), { esgotadaMes: "2026-11", esgotadaPor: { pid: euL.pid, nome: euL.nome }, esgotadaEm: serverTimestamp() }))), "não marca esgotada a conta que está com outra pessoa");
+const contaNova = (x = {}) => ({ titular: "Conta teste regras", final: "12", obs: "", ativa: true, uso: null, esgotadaMes: null, esgotadaPor: null, esgotadaEm: null, criadoEm: serverTimestamp(), ...x });
+const nova = await addDoc(collection(c.db, "okto_contas"), contaNova()).catch((e) => { console.log("    (erro:", e.code, ")"); return null; });
+checar(!!nova, "cadastra conta nova");
+checar(!(await pode(() => addDoc(collection(c.db, "okto_contas"), contaNova({ uso: { id: "x", pid: "outra", nome: "Outra", aparelho: "", inicio: serverTimestamp() } })))), "não cadastra conta já em uso por outra pessoa");
+checar(!(await pode(() => addDoc(collection(c.db, "okto_contas"), contaNova({ final: "12345" })))), "não cadastra final de CPF com mais de 4 números");
+checar(!(await pode(() => addDoc(collection(c.db, "okto_contas"), contaNova({ ativa: false })))), "não cadastra conta já desativada");
+checar(!(await pode(() => addDoc(collection(c.db, "okto_contas"), contaNova({ extra: 1 })))), "não cadastra conta com campo fora do combinado");
+if (nova) {
+  checar(await pode(() => updateDoc(nova, { esgotadaMes: "2026-11", esgotadaPor: { pid: euL.pid, nome: euL.nome }, esgotadaEm: serverTimestamp() })), "marca conta livre como esgotada");
+  checar(!(await pode(() => updateDoc(nova, { esgotadaMes: "2026-12", esgotadaPor: { pid: "outra", nome: "Outra" }, esgotadaEm: serverTimestamp() }))), "não marca esgotada em nome de outra pessoa");
+  checar(await pode(() => updateDoc(nova, { esgotadaMes: null, esgotadaPor: null, esgotadaEm: null })), "desmarca esgotada");
+  checar(await pode(() => updateDoc(nova, { titular: "Conta teste regras", final: "12", obs: "", ativa: false })), "desativa conta livre");
+  checar(!(await pode(() => deleteDoc(nova))), "não apaga a conta que cadastrou");
+}
 checar(!(await pode(() => addDoc(collection(c.db, "okto_eventos"), { em: serverTimestamp(), mes: "2026-10", tipo: "pegou", quem: { pid: "outra", nome: "Outra" } }))), "não registra evento em nome de outra pessoa");
 checar(!(await pode(() => deleteDoc(doc(c.db, "okto_contas", livre.id)))), "não apaga conta");
 const logins = await getDocs(collection(c.db, "okto_acessos"));
 checar(logins.size > 0, "lê os logins da Oktoplus (" + logins.size + ")");
 const umLogin = logins.docs[0];
-checar(!(await pode(() => updateDoc(doc(c.db, "okto_acessos", umLogin.id), { senha: "trocada", atualizadoEm: serverTimestamp(), atualizadoPor: euL.nome }))), "não muda senha de login");
-checar(!(await pode(() => addDoc(collection(c.db, "okto_acessos"), { nome: "X", cpf: "", senha: "", email: "", obs: "", ordem: 1, atualizadoEm: serverTimestamp(), atualizadoPor: euL.nome }))), "não cadastra login");
+// logins: toda a equipe da Oktoplus cadastra e corrige, sempre assinando com o próprio nome; apagar é só com o administrador
+const loginAntes = umLogin.data();
+checar(await pode(() => updateDoc(doc(c.db, "okto_acessos", umLogin.id), { senha: "trocada", atualizadoEm: serverTimestamp(), atualizadoPor: euL.nome })), "corrige a senha de um login");
+checar(await pode(() => updateDoc(doc(c.db, "okto_acessos", umLogin.id), { senha: loginAntes.senha, atualizadoEm: serverTimestamp(), atualizadoPor: euL.nome })), "volta a senha");
+checar(!(await pode(() => updateDoc(doc(c.db, "okto_acessos", umLogin.id), { senha: "x", atualizadoEm: serverTimestamp(), atualizadoPor: "Outra pessoa" }))), "não corrige login assinando como outra pessoa");
+const loginNovo = await addDoc(collection(c.db, "okto_acessos"), { nome: "Login teste regras", cpf: "36060710433", senha: "s", email: "", obs: "", ordem: 1, atualizadoEm: serverTimestamp(), atualizadoPor: euL.nome }).catch((e) => { console.log("    (erro:", e.code, ")"); return null; });
+checar(!!loginNovo, "cadastra login");
+checar(!(await pode(() => addDoc(collection(c.db, "okto_acessos"), { nome: "X", cpf: "", senha: "", email: "", obs: "", ordem: 1, extra: 1, atualizadoEm: serverTimestamp(), atualizadoPor: euL.nome }))), "não cadastra login com campo fora do combinado");
+if (loginNovo) checar(!(await pode(() => deleteDoc(loginNovo))), "não apaga o login que cadastrou");
 checar(!(await pode(() => deleteDoc(doc(c.db, "okto_acessos", umLogin.id)))), "não apaga login");
 await deleteApp(c.app);
 

@@ -139,9 +139,42 @@ service cloud.firestore {
           && souEu(request.resource.data.esgotadaPor)
           && request.resource.data.esgotadaEm == request.time;
       }
+      // Gerenciar contas (toda a equipe da Oktoplus): cadastrar, editar nome, final do CPF e observação,
+      // marcar e desmarcar esgotada. Desativar ou reativar só com a conta livre, e tirar a conta de
+      // outra pessoa ("Liberar") e apagar continuam só com o administrador.
+      function contaValida(d) {
+        return d.titular is string && d.titular.size() > 0 && d.titular.size() <= 60
+          && d.final is string && d.final.matches('^[0-9]{0,4}$')
+          && texto(d.obs, 200) && d.ativa is bool;
+      }
+      function criarConta() {
+        return request.resource.data.keys().hasOnly(['titular', 'final', 'obs', 'ativa', 'uso', 'esgotadaMes', 'esgotadaPor', 'esgotadaEm', 'criadoEm'])
+          && contaValida(request.resource.data) && request.resource.data.ativa == true
+          && request.resource.data.uso == null && request.resource.data.esgotadaMes == null
+          && request.resource.data.esgotadaPor == null && request.resource.data.esgotadaEm == null
+          && request.resource.data.criadoEm == request.time;
+      }
+      function editarConta() {
+        return so(['titular', 'final', 'obs', 'ativa']) && contaValida(request.resource.data)
+          && (request.resource.data.ativa == resource.data.ativa || resource.data.get('uso', null) == null);
+      }
+      function esgotarLivre() {
+        return resource.data.get('uso', null) == null && resource.data.ativa == true
+          && so(['esgotadaMes', 'esgotadaPor', 'esgotadaEm'])
+          && mesIso(request.resource.data.esgotadaMes)
+          && souEu(request.resource.data.esgotadaPor)
+          && request.resource.data.esgotadaEm == request.time;
+      }
+      function reabrir() {
+        return so(['esgotadaMes', 'esgotadaPor', 'esgotadaEm'])
+          && request.resource.data.esgotadaMes == null && request.resource.data.esgotadaPor == null
+          && request.resource.data.esgotadaEm == null;
+      }
       allow read: if oktoUsar();
-      allow create, delete: if oktoAdmin();
-      allow update: if oktoAdmin() || (oktoUsar() && (pegar() || devolverMeu() || esgotarMeu()));
+      allow create: if oktoAdmin() || (oktoUsar() && criarConta());
+      allow delete: if oktoAdmin();
+      allow update: if oktoAdmin()
+        || (oktoUsar() && (pegar() || devolverMeu() || esgotarMeu() || editarConta() || esgotarLivre() || reabrir()));
     }
 
     match /okto_usos/{id} {
@@ -157,7 +190,8 @@ service cloud.firestore {
     }
 
     // logins das contas (CPF, senha, e-mail) e de outros sistemas da agência:
-    // toda a equipe da Oktoplus lê; só quem administra a Oktoplus grava
+    // toda a equipe da Oktoplus lê, cadastra e corrige (sempre assinado com o próprio nome);
+    // só quem administra a Oktoplus apaga
     match /okto_acessos/{id} {
       function acessoValido(d) {
         return d.keys().hasOnly(['nome', 'cpf', 'senha', 'email', 'obs', 'ordem', 'atualizadoEm', 'atualizadoPor'])
@@ -168,7 +202,7 @@ service cloud.firestore {
           && d.atualizadoPor == eu().nome;
       }
       allow read: if oktoUsar();
-      allow create, update: if oktoAdmin() && acessoValido(request.resource.data);
+      allow create, update: if oktoUsar() && acessoValido(request.resource.data);
       allow delete: if oktoAdmin();
     }
 

@@ -129,7 +129,7 @@ function PegarConta({ eu, conta, aparelhoPadrao, aparelhos, aoPegar }: {
 function Navegacao({ sub, admin }: { sub: string; admin: boolean }) {
   const itens: [string, string][] = admin
     ? [["", "Contas"], ["logins", "Logins"], ["historico", "Histórico"], ["gerenciar", "Gerenciar contas"]]
-    : [["", "Contas"], ["logins", "Logins"]];
+    : [["", "Contas"], ["logins", "Logins"], ["gerenciar", "Gerenciar contas"]];
   return (
     <nav className="okto-nav" aria-label="Seções do Oktoplus">
       {itens.map(([k, t]) => <a key={k} href={`#/oktoplus${k ? "/" + k : ""}`} className={sub.split("/")[0] === k ? "on" : ""} aria-current={sub.split("/")[0] === k ? "page" : undefined}>{t}</a>)}
@@ -178,7 +178,7 @@ function Painel({ eu, contas, admin, acessos }: { eu: Eu; contas: Conta[]; admin
                 {(() => {
                   const a = acessoDaConta(c, acessos);
                   if (a) return <div className="login-conta"><span className="login-tit">Login para entrar na Oktoplus</span><Credenciais a={a} /></div>;
-                  return <p className="login-falta">{admin ? <>O login desta conta ainda não está em <a href="#/oktoplus/logins">Logins</a>.</> : "O login desta conta ainda não foi cadastrado. Peça a um administrador."}</p>;
+                  return <p className="login-falta">O login desta conta ainda não está em <a href="#/oktoplus/logins">Logins</a>. Cadastre lá em <b>Adicionar login</b>.</p>;
                 })()}
               </li>
             ))}
@@ -246,9 +246,9 @@ function Painel({ eu, contas, admin, acessos }: { eu: Eu; contas: Conta[]; admin
   );
 }
 
-/* ═════════════════ Gerenciar contas (administrador) ═════════════════ */
+/* ═════════════════ Gerenciar contas (toda a equipe da Oktoplus) ═════════════════ */
 
-function FormConta({ eu, conta, aoSalvar }: { eu: Eu; conta: Conta | null; aoSalvar?: () => void }) {
+function FormConta({ eu, conta, admin, aoSalvar }: { eu: Eu; conta: Conta | null; admin: boolean; aoSalvar?: () => void }) {
   const [titular, setTitular] = useState(conta?.titular || "");
   const [final, setFinal] = useState(conta?.final || "");
   const [obs, setObs] = useState(conta?.obs || "");
@@ -269,7 +269,15 @@ function FormConta({ eu, conta, aoSalvar }: { eu: Eu; conta: Conta | null; aoSal
       <label className="campo"><span>Titular</span><input value={titular} onChange={(e) => setTitular(e.target.value)} required maxLength={60} placeholder="Nome da pessoa da conta" /></label>
       <label className="campo curto"><span>Final do CPF</span><input value={final} onChange={(e) => setFinal(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={4} placeholder="Ex.: 75" /></label>
       <label className="campo largo"><span>Observação</span><input value={obs} onChange={(e) => setObs(e.target.value)} maxLength={200} /></label>
-      {conta && <label className="chk"><input type="checkbox" checked={ativa} onChange={(e) => setAtiva(e.target.checked)} /> <span>Conta ativa</span></label>}
+      {conta && (() => {
+        // desativar fecha o uso de quem está com a conta: sem ser administrador, só com a conta livre
+        const travada = !admin && !!conta.uso;
+        return (
+          <label className="chk" title={travada ? `Está com ${conta.uso!.nome}: só dá para desativar depois que for devolvida` : undefined}>
+            <input type="checkbox" checked={ativa} disabled={travada} onChange={(e) => setAtiva(e.target.checked)} /> <span>Conta ativa{travada ? ` (em uso por ${conta.uso!.nome})` : ""}</span>
+          </label>
+        );
+      })()}
       <div className="linha"><button type="submit" className="btn pri" disabled={ocupado}>{ocupado ? "Salvando…" : conta ? "Salvar conta" : "Cadastrar conta"}</button></div>
       {msg.erro && <p className="msg erro" role="alert">{msg.erro}</p>}
       {msg.ok && <p className="msg ok" role="status">{msg.ok}</p>}
@@ -277,12 +285,14 @@ function FormConta({ eu, conta, aoSalvar }: { eu: Eu; conta: Conta | null; aoSal
   );
 }
 
-function Gerenciar({ eu, contas }: { eu: Eu; contas: Conta[] }) {
+function Gerenciar({ eu, contas, admin }: { eu: Eu; contas: Conta[]; admin: boolean }) {
   const ordenadas = [...contas].sort((a, b) => Number(b.ativa) - Number(a.ativa));
   return (
     <section aria-labelledby="h-contas" className="bloco">
       <h2 id="h-contas" className="tit">Contas <span className="cont">{contas.filter((c) => c.ativa).length} ativas</span></h2>
-      <p className="dica">Qualquer pessoa com acesso pode pegar qualquer conta livre; quem usou fica no Histórico. Os logins (CPF, senha e e-mail) ficam em <a href="#/oktoplus/logins">Logins</a>. As pessoas e os PINs ficam em Equipe.</p>
+      <p className="dica">{admin
+        ? <>Qualquer pessoa com acesso pode pegar qualquer conta livre; quem usou fica no Histórico. Toda a equipe da Oktoplus pode cadastrar e editar contas aqui e os logins em Logins; liberar a conta de outra pessoa e apagar login é só com o administrador. Os logins (CPF, senha e e-mail) ficam em <a href="#/oktoplus/logins">Logins</a>. As pessoas e os PINs ficam em Equipe.</>
+        : <>Aqui você cadastra uma conta nova e corrige o nome, o final do CPF ou a observação. Depois de cadastrar, coloque o login dela (CPF, senha e e-mail) em <a href="#/oktoplus/logins">Logins</a>. Tirar a conta de outra pessoa é só com o administrador.</>}</p>
       <ul className="lista">
         {ordenadas.map((c) => (
           <li key={c.id} className={`item col${c.ativa ? "" : " inativa"}`}>
@@ -297,14 +307,14 @@ function Gerenciar({ eu, contas }: { eu: Eu; contas: Conta[] }) {
                 </div>
                 <span className="editar" aria-hidden="true">Editar</span>
               </summary>
-              <FormConta eu={eu} conta={c} />
+              <FormConta eu={eu} conta={c} admin={admin} />
             </details>
             {c.ativa && (
               <div className="item-a">
-                {c.uso && <BotaoAcao rotulo="Liberar" confirmar={`Tirar de ${c.uso.nome}?`} acao={() => fechar(eu, c.id, false, true)} />}
+                {admin && c.uso && <BotaoAcao rotulo="Liberar" confirmar={`Tirar de ${c.uso.nome}?`} acao={() => fechar(eu, c.id, false, true)} />}
                 {c.esgotada
                   ? <BotaoAcao rotulo="Desmarcar esgotada" confirmar="Voltar para livres?" acao={() => desmarcarEsgotada(eu, c.id)} />
-                  : <BotaoAcao rotulo="Marcar esgotada" confirmar="Confirmar: esgotada?" classe="btn aviso" acao={() => marcarEsgotada(eu, c.id)} />}
+                  : (admin || !c.uso || c.uso.pid === eu.pid) && <BotaoAcao rotulo="Marcar esgotada" confirmar="Confirmar: esgotada?" classe="btn aviso" acao={() => marcarEsgotada(eu, c.id)} />}
               </div>
             )}
           </li>
@@ -312,7 +322,7 @@ function Gerenciar({ eu, contas }: { eu: Eu; contas: Conta[] }) {
       </ul>
       <details className="novo">
         <summary className="btn">Adicionar conta</summary>
-        <FormConta eu={eu} conta={null} />
+        <FormConta eu={eu} conta={null} admin={admin} />
       </details>
     </section>
   );
@@ -501,19 +511,17 @@ function CartaoLogin({ eu, a, conta, admin }: { eu: Eu; a: Acesso; conta: Conta 
         <span className="conta-nome">{a.nome}{okto ? <small className="final" title="Final do CPF">•••{a.cpf.slice(-2)}</small> : null}</span>
         {situacao(conta)}
         {okto && !cpfValido(a.cpf) && <em className="tag emp" title="Os dígitos verificadores deste CPF não batem. Confira na planilha.">CPF não confere</em>}
-        {okto && !conta && admin && <em className="tag" title="Não achei uma conta com esse nome e final de CPF em Gerenciar contas">sem conta cadastrada</em>}
+        {okto && !conta && <em className="tag" title="Não achei uma conta com esse nome e final de CPF em Gerenciar contas">sem conta cadastrada</em>}
       </div>
       <Credenciais a={a} />
       {a.obs && <p className="det obs">{a.obs}</p>}
-      {admin && (
-        <div className="login-adm">
-          <details className="edit">
-            <summary><span className="editar">Editar</span></summary>
-            <FormLogin eu={eu} atual={a} />
-          </details>
-          <BotaoAcao rotulo="Apagar" confirmar={`Apagar o login de ${a.nome}?`} classe="btn aviso" acao={() => excluirAcesso(eu, a)} />
-        </div>
-      )}
+      <div className="login-adm">
+        <details className="edit">
+          <summary><span className="editar">Editar</span></summary>
+          <FormLogin eu={eu} atual={a} />
+        </details>
+        {admin && <BotaoAcao rotulo="Apagar" confirmar={`Apagar o login de ${a.nome}?`} classe="btn aviso" acao={() => excluirAcesso(eu, a)} />}
+      </div>
     </li>
   );
 }
@@ -575,7 +583,7 @@ function Logins({ eu, contas, acessos, erro, admin }: { eu: Eu; contas: Conta[];
   const okto = lista.filter(ehContaOktoplus), outros = lista.filter((a) => !ehContaOktoplus(a));
   return (
     <>
-      <p className="dica topo-dica">Toda a equipe da Oktoplus vê esta lista. A senha fica escondida até você clicar no olho, e o botão de copiar copia sem mostrar. Ao sair do sistema, a cópia guardada no navegador é apagada.</p>
+      <p className="dica topo-dica">Toda a equipe da Oktoplus vê esta lista e pode cadastrar e corrigir logins (fica registrado quem mexeu). A senha fica escondida até você clicar no olho, e o botão de copiar copia sem mostrar. Ao sair do sistema, a cópia guardada no navegador é apagada.</p>
       {acessos.length > 0 && (
         <label className="campo busca"><span className="sr">Buscar login</span>
           <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, CPF ou e-mail" />
@@ -585,7 +593,7 @@ function Logins({ eu, contas, acessos, erro, admin }: { eu: Eu; contas: Conta[];
         <h2 id="h-lg-okto" className="tit">Contas Oktoplus <span className="cont">{okto.length}</span></h2>
         {okto.length ? (
           <ul className="lista">{okto.map((a) => <CartaoLogin key={a.id} eu={eu} a={a} conta={contaDoAcesso(a, contas, acessos)} admin={admin} />)}</ul>
-        ) : <p className="vazio">{busca ? "Nenhum login encontrado." : admin ? "Nenhum login cadastrado ainda. Use \"Colar da planilha\" logo abaixo." : "Nenhum login cadastrado ainda."}</p>}
+        ) : <p className="vazio">{busca ? "Nenhum login encontrado." : admin ? "Nenhum login cadastrado ainda. Use \"Colar da planilha\" logo abaixo." : "Nenhum login cadastrado ainda. Use \"Adicionar login\" logo abaixo."}</p>}
       </section>
       {(outros.length > 0 || !busca) && (
         <section className="bloco" aria-labelledby="h-lg-outros">
@@ -594,15 +602,14 @@ function Logins({ eu, contas, acessos, erro, admin }: { eu: Eu; contas: Conta[];
             : <p className="vazio">Nenhum outro acesso cadastrado.</p>}
         </section>
       )}
-      {admin && (
-        <section className="bloco">
-          <details className="novo">
-            <summary className="btn">Adicionar login</summary>
-            <FormLogin eu={eu} atual={null} />
-          </details>
-          <ColarPlanilha eu={eu} acessos={acessos} contas={contas} />
-        </section>
-      )}
+      <section className="bloco">
+        <details className="novo">
+          <summary className="btn">Adicionar login</summary>
+          <p className="dica">Para uma conta Oktoplus nova, use o mesmo nome e o CPF do titular cadastrado em <a href="#/oktoplus/gerenciar">Gerenciar contas</a>: o login aparece sozinho para quem pegar a conta.</p>
+          <FormLogin eu={eu} atual={null} />
+        </details>
+        {admin && <ColarPlanilha eu={eu} acessos={acessos} contas={contas} />}
+      </section>
     </>
   );
 }
@@ -614,7 +621,7 @@ export default function Oktoplus({ eu, sub }: { eu: Eu; sub: string }) {
   const { contas, erro } = useContas();
   const { acessos, erro: erroAcessos } = useAcessos();
   const [secao, param] = sub.split("/");
-  const pagina = secao === "logins" ? "logins" : admin && (secao === "historico" || secao === "gerenciar") ? secao : "";
+  const pagina = secao === "logins" || secao === "gerenciar" ? secao : admin && secao === "historico" ? secao : "";
   const mes = mesValido(param) && param <= mesAtual() ? param : mesAtual();
   return (
     <div className="okto">
@@ -629,11 +636,11 @@ export default function Oktoplus({ eu, sub }: { eu: Eu; sub: string }) {
         {erro && <p className="vazio">{erro}</p>}
         {!contas && !erro && <p className="vazio">Carregando as contas…</p>}
         {contas && !contas.length && pagina === "" && (
-          <p className="vazio">{admin ? <>Nenhuma conta cadastrada ainda. Cadastre em <a href="#/oktoplus/gerenciar">Gerenciar contas</a> ou traga os dados do site antigo em <a href="#/equipe">Equipe</a>.</> : "Nenhuma conta cadastrada ainda."}</p>
+          <p className="vazio">{admin ? <>Nenhuma conta cadastrada ainda. Cadastre em <a href="#/oktoplus/gerenciar">Gerenciar contas</a> ou traga os dados do site antigo em <a href="#/equipe">Equipe</a>.</> : <>Nenhuma conta cadastrada ainda. Cadastre em <a href="#/oktoplus/gerenciar">Gerenciar contas</a>.</>}</p>
         )}
         {contas && pagina === "" && <Painel eu={eu} contas={contas} admin={admin} acessos={acessos || []} />}
         {contas && pagina === "logins" && <Logins eu={eu} contas={contas} acessos={acessos} erro={erroAcessos} admin={admin} />}
-        {contas && pagina === "gerenciar" && <Gerenciar eu={eu} contas={contas} />}
+        {contas && pagina === "gerenciar" && <Gerenciar eu={eu} contas={contas} admin={admin} />}
         {contas && pagina === "historico" && <Historico contas={contas} mes={mes} />}
       </main>
     </div>

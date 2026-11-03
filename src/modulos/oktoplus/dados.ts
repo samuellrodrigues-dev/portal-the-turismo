@@ -4,7 +4,7 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../firebase";
-import type { Eu } from "../../equipe/dados";
+import { nivel, type Eu } from "../../equipe/dados";
 import { mesAtual, mesesEntre } from "../../lib/tempo";
 
 /* ═════════════════ Tipos ═════════════════ */
@@ -144,15 +144,16 @@ export async function fechar(eu: Eu, contaId: string, esgotou: boolean, souAdmin
   });
 }
 
-/** Administrador: marca como esgotada (e fecha o uso aberto, se houver). */
+/** Marca como esgotada (e fecha o uso aberto, se houver). Só o administrador mexe na conta que está com outra pessoa. */
 export async function marcarEsgotada(eu: Eu, contaId: string): Promise<string> {
   return runTransaction(db, async (tx) => {
     const ref = doc(db, "okto_contas", contaId);
     const s = await tx.get(ref);
     if (!s.exists()) throw new Error("Conta não encontrada.");
     const c = docParaConta(s.id, s.data());
+    if (c.uso && c.uso.pid !== eu.pid && nivel(eu, "oktoplus") !== "admin") throw new Error(`Essa conta está com ${c.uso.nome}. Só ${c.uso.nome} ou o administrador podem marcar como esgotada.`);
     if (c.uso) tx.update(doc(db, "okto_usos", c.uso.id), { fim: serverTimestamp(), fimTipo: "esgotou", fimPor: eu$(eu), meses: mesesEntre(c.uso.inicio, new Date()) });
-    tx.update(ref, { uso: null, esgotadaMes: mesAtual(), esgotadaPor: eu$(eu), esgotadaEm: serverTimestamp() });
+    tx.update(ref, { ...(c.uso ? { uso: null } : {}), esgotadaMes: mesAtual(), esgotadaPor: eu$(eu), esgotadaEm: serverTimestamp() });
     novoEvento(tx, { tipo: "esgotou", contaId, conta: c.titular, final: c.final, quem: eu$(eu), alvo: c.uso ? { pid: c.uso.pid, nome: c.uso.nome } : null, detalhe: null });
     return `${c.titular} marcada como esgotada.`;
   });
@@ -186,6 +187,9 @@ export async function salvarConta(eu: Eu, id: string | null, v: { titular: strin
     const s = await tx.get(ref);
     if (!s.exists()) throw new Error("Conta não encontrada.");
     const antes = docParaConta(s.id, s.data());
+    // quem não administra não tira a conta de quem está usando (desativar fecharia o uso dela)
+    if (antes.ativa !== v.ativa && antes.uso && nivel(eu, "oktoplus") !== "admin")
+      throw new Error(`${antes.titular} está com ${antes.uso.nome}. A conta precisa ser devolvida antes de ser ${v.ativa ? "reativada" : "desativada"}.`);
     const mud: DocumentData = { titular, final, obs, ativa: v.ativa };
     if (antes.ativa && !v.ativa && antes.uso) {
       tx.update(doc(db, "okto_usos", antes.uso.id), { fim: serverTimestamp(), fimTipo: "liberada", fimPor: eu$(eu), meses: mesesEntre(antes.uso.inicio, new Date()) });
