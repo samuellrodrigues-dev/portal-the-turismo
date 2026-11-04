@@ -129,6 +129,8 @@ const recs = await getDocs(collection(c.db, "receber"));
 checar(recs.size > 0, "lê os valores a receber (" + recs.size + ")");
 checar(!(await pode(() => updateDoc(doc(c.db, "receber", recs.docs[0].id), { obs: "mexi" }))), "não edita valor a receber");
 checar(!(await pode(() => deleteDoc(doc(c.db, "receber", recs.docs[0].id)))), "não apaga valor a receber");
+checar(await pode(() => getDoc(doc(c.db, "anotacoes", "receber"))), "lê as anotações");
+checar(!(await pode(() => setDoc(doc(c.db, "anotacoes", "receber"), { texto: "mexi", atualizadoPor: { pid: denise.id.stringValue, nome: "Denise" }, atualizadoEm: serverTimestamp() }))), "não edita as anotações");
 const arq = (await getDocs(collection(c.db, "arquivos"))).docs[0];
 checar(!!arq && (await pode(() => getDocs(collection(c.db, "arquivos", arq.id, "partes")))), "abre os anexos");
 checar(!(await pode(() => deleteDoc(doc(c.db, "arquivos", arq.id)))), "não apaga anexo");
@@ -148,6 +150,7 @@ await deleteApp(c.app);
 await gravarAdmin("uids/" + uidD, { pid: denise.id.stringValue, nome: "Denise", admin: false, ativo: true, abas: { oktoplus: "usar", salavip: "", boletos: "", operacao: "" } });
 c = await cliente("Denise", pins.Denise);
 checar(!(await pode(() => getDocs(collection(c.db, "receber")))), "sem a aba Valores a receber não lê CPF nem valores");
+checar(!(await pode(() => getDoc(doc(c.db, "anotacoes", "receber")))), "sem a aba não lê as anotações");
 await deleteApp(c.app);
 
 console.log("João Pedro (Oktoplus admin, sem ser administrador do sistema)");
@@ -172,6 +175,18 @@ if (novoRec) {
   checar(await pode(() => updateDoc(novoRec, { obs: "ok", atualizadoPor: souJ, atualizadoEm: serverTimestamp() })), "edita valor a receber");
   checar(await pode(() => deleteDoc(novoRec)), "apaga valor a receber");
 }
+const semData = await addDoc(collection(c.db, "receber"), rec({ parcelas: [{ venc: "", valor: 957, recebidoEm: null, valorRecebido: null }], proxVenc: null })).catch((e) => { console.log("    (erro:", e.code, ")"); return null; });
+checar(!!semData, "valor a receber sem data é aceito");
+if (semData) await deleteDoc(semData);
+const nota = (x = {}) => ({ texto: "anotação de teste", atualizadoPor: souJ, atualizadoEm: serverTimestamp(), ...x });
+const notaAntes = (await getDoc(doc(c.db, "anotacoes", "receber"))).data();
+checar(await pode(() => setDoc(doc(c.db, "anotacoes", "receber"), nota())), "quem edita a aba muda as anotações");
+checar(!(await pode(() => setDoc(doc(c.db, "anotacoes", "outra"), nota()))), "só existe a anotação da aba");
+checar(!(await pode(() => setDoc(doc(c.db, "anotacoes", "receber"), nota({ extra: 1 })))), "anotação com campo a mais é recusada");
+checar(!(await pode(() => setDoc(doc(c.db, "anotacoes", "receber"), nota({ texto: "x".repeat(20001) })))), "anotação grande demais é recusada");
+checar(!(await pode(() => setDoc(doc(c.db, "anotacoes", "receber"), nota({ atualizadoPor: { pid: "outro", nome: "Outra pessoa" } })))), "não assina anotação como outra pessoa");
+checar(!(await pode(() => deleteDoc(doc(c.db, "anotacoes", "receber")))), "ninguém apaga as anotações");
+if (notaAntes) await setDoc(doc(c.db, "anotacoes", "receber"), nota({ texto: notaAntes.texto }));
 checar(!(await pode(() => getDocs(collection(c.db, "pessoas")))), "não lê a equipe");
 checar(!(await pode(() => updateDoc(doc(c.db, "publico", "equipe"), { pessoas: [] }))), "não mexe na lista de nomes");
 await deleteApp(c.app);

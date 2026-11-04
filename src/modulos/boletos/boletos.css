@@ -304,6 +304,21 @@
 .bol-secoes a[aria-current=page] { background: var(--nuvem); color: var(--azul); box-shadow: 0 6px 16px -8px var(--sombra); }
 .bol-secoes a[aria-current=page] span { background: var(--azul-bg); color: var(--azul); }
 
+/* ─── anotações ─── */
+.nuvem.notas { display: block; margin-top: 46px; padding: 22px 22px 16px; }
+.nuvem.notas textarea {
+  display: block; width: 100%; min-height: 340px; padding: 4px 2px; border: 0; resize: vertical; background: transparent; color: var(--tx);
+  font: 600 16.5px/1.65 var(--fonte); white-space: pre-wrap;
+}
+.nuvem.notas textarea:focus { outline: none; }
+.nuvem.notas textarea::placeholder { color: var(--mudo); opacity: .75; }
+.nuvem.notas footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--linha); font-size: 13.5px; font-weight: 700; color: var(--mudo); }
+.notas-estado.e-erro { color: var(--vermelho); }
+.notas-estado.e-salvo::before { content: "✓ "; color: var(--verde); }
+.notas-conta { font-variant-numeric: tabular-nums; }
+.notas-aviso { margin-top: 10px; color: var(--vermelho); }
+.bol-grupo.g-semdata h2 { color: var(--mudo); }
+
 /* ─── cartão de um valor a receber ─── */
 .nuvem-sub .doc { font-variant-numeric: tabular-nums; }
 .nao-confere { margin-left: 6px; padding: 0 7px; border-radius: 999px; background: var(--vermelho-bg); color: var(--vermelho); font-style: normal; font-size: 12px; font-weight: 800; }
@@ -390,8 +405,11 @@
 .rec-resto input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--azul); }
 
 @media (max-width: 720px) {
-  .bol-secoes { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-  .bol-secoes a { padding: 0 8px; gap: 7px; font-size: 14px; }
+  .bol-secoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; gap: 4px; }
+  .bol-secoes a { padding: 0 6px; gap: 6px; font-size: 13.5px; }
+  .bol-secoes a svg { display: none; }
+  .bol-secoes a span { padding: 0 6px; }
+  .nuvem.notas textarea { min-height: 300px; font-size: 16px; }
   .rec-barra-dir { width: 100%; }
   .rec-ger { grid-template-columns: 1fr 1fr; }
   .rec-ger .valor { grid-column: 1 / -1; }

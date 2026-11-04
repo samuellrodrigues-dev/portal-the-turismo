@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CEU, Ceu, Dialogo, IconeClima, Previsao, SeletorMes, erroDe, semAcento, type CartaoPrevisao } from "./comum";
 import { SecaoReceber } from "./Receber";
+import { SecaoNotas } from "./Notas";
 import { useReceberAbertos } from "./recebiveis";
 import { nivel, type Eu } from "../../equipe/dados";
 import { toast } from "../../shell/toast";
@@ -386,12 +387,14 @@ function SecaoPagar({ eu, pode, hoje, abertos, erro, topo }: { eu: Eu; pode: boo
 const ICO_SECAO = {
   receber: <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2.5" /><circle cx="12" cy="12" r="2.6" /><path d="M6 9.5v5M18 9.5v5" /></svg>,
   pagar: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3.5h14v17l-2.4-1.6-2.3 1.6-2.3-1.6-2.3 1.6-2.3-1.6L5 20.5z" /><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4" /></svg>,
+  notas: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 3.5H6.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8.5z" /><path d="M14.5 3.5v5h5M8.5 12.5h7M8.5 16h5" /></svg>,
 };
 
-/** #/boletos → A receber · #/boletos/pagar → Boletos a pagar (o endereço continua "boletos" para não mexer nos acessos). */
+/** #/boletos → A receber · #/boletos/pagar → Boletos a pagar · #/boletos/notas → Anotações (o endereço continua "boletos" para não mexer nos acessos). */
 export default function ValoresAReceber({ eu, sub = "" }: { eu: Eu; sub?: string }) {
   const pode = nivel(eu, "boletos") === "editar";
-  const secao = sub.split("/")[0] === "pagar" ? "pagar" : "receber";
+  const parte = sub.split("/")[0];
+  const secao = parte === "pagar" ? "pagar" : parte === "notas" ? "notas" : "receber";
   const [hoje, setHoje] = useState(hojeIso());
   useEffect(() => { const t = setInterval(() => setHoje(hojeIso()), 60_000); return () => clearInterval(t); }, []);
   const boletos = useAbertos();
@@ -402,6 +405,7 @@ export default function ValoresAReceber({ eu, sub = "" }: { eu: Eu; sub?: string
     <nav className="bol-secoes" aria-label="Seções">
       <a href="#/boletos" aria-current={secao === "receber" ? "page" : undefined}>{ICO_SECAO.receber}A receber<span>{receber.lista?.length ?? "…"}</span></a>
       <a href="#/boletos/pagar" aria-current={secao === "pagar" ? "page" : undefined}>{ICO_SECAO.pagar}Boletos a pagar<span>{boletos.lista?.length ?? "…"}</span></a>
+      <a href="#/boletos/notas" aria-current={secao === "notas" ? "page" : undefined}>{ICO_SECAO.notas}Anotações</a>
     </nav>
   );
   const topo = (titulo: string) => (novo: ReactNode, resumo: string) => (
@@ -423,7 +427,9 @@ export default function ValoresAReceber({ eu, sub = "" }: { eu: Eu; sub?: string
       <main className="bol-pag">
         {secao === "receber"
           ? <SecaoReceber eu={eu} pode={pode} hoje={hoje} abertos={receber.lista} erro={receber.erro} topo={topo("Valores a receber")} />
-          : <SecaoPagar eu={eu} pode={pode} hoje={hoje} abertos={boletos.lista} erro={boletos.erro} topo={topo("Boletos a pagar")} />}
+          : secao === "notas"
+            ? <SecaoNotas eu={eu} pode={pode} nav={nav} />
+            : <SecaoPagar eu={eu} pode={pode} hoje={hoje} abertos={boletos.lista} erro={boletos.erro} topo={topo("Boletos a pagar")} />}
       </main>
     </div>
   );

@@ -23,6 +23,9 @@ export type Recebivel = {
 export type DadosRecebivel = Pick<Recebivel, "devedor" | "documento" | "nascimento" | "telefone" | "referencia" | "obs" | "parcelas">;
 
 export const MAX_PARCELAS = 60;
+/** Parcela sem data fica depois das que têm data (e entre elas, na ordem em que foram lançadas). */
+const chaveVenc = (v: string) => v || "9999-12-31";
+const porVenc = (a: { venc: string }, b: { venc: string }) => chaveVenc(a.venc).localeCompare(chaveVenc(b.venc));
 const centavos = (n: number) => Math.round(n * 100) / 100;
 const iso = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
 
@@ -32,7 +35,7 @@ function docParaRecebivel(id: string, x: DocumentData): Recebivel {
   const parcelas: Parcela[] = (Array.isArray(x.parcelas) ? x.parcelas : []).map((p: DocumentData) => ({
     venc: iso(p?.venc), valor: Number(p?.valor) || 0, recebidoEm: iso(p?.recebidoEm) || null,
     valorRecebido: typeof p?.valorRecebido === "number" ? p.valorRecebido : null,
-  })).sort((a: Parcela, b: Parcela) => a.venc.localeCompare(b.venc));
+  })).sort(porVenc);
   return {
     id, devedor: x.devedor || "", documento: x.documento || "", nascimento: x.nascimento || "", telefone: x.telefone || "",
     referencia: x.referencia || "", obs: x.obs || "", parcelas, situacao: x.situacao === "quitado" ? "quitado" : "aberto",
@@ -48,11 +51,14 @@ export const emAberto = (r: Pick<Recebivel, "parcelas">) => numeradas(r).filter(
 export const proxima = (r: Pick<Recebivel, "parcelas">): ParcelaN | null => emAberto(r)[0] || null;
 export const saldo = (r: Pick<Recebivel, "parcelas">) => centavos(emAberto(r).reduce((t, p) => t + p.valor, 0));
 export const recebido = (r: Pick<Recebivel, "parcelas">) => centavos(r.parcelas.reduce((t, p) => t + (p.recebidoEm ? p.valorRecebido ?? p.valor : 0), 0));
+/** A próxima parcela em aberto não tem data: o valor vai para o grupo "Sem data". */
+export const semData = (r: Pick<Recebivel, "parcelas">) => { const p = proxima(r); return !!p && !p.venc; };
 
 /** O "tempo" pela próxima parcela: tempestade (atrasada), chuva (vence hoje), nublado (até 7 dias), céu aberto (depois), sol (tudo recebido). */
 export function climaReceber(r: Pick<Recebivel, "parcelas">, hoje = hojeIso()): Clima {
   const p = proxima(r);
   if (!p) return "sol";
+  if (!p.venc) return "aberto";
   const d = diasEntre(hoje, p.venc);
   return d < 0 ? "tempestade" : d === 0 ? "chuva" : d <= 7 ? "nublado" : "aberto";
 }
@@ -66,11 +72,13 @@ export function emFoco(r: Pick<Recebivel, "parcelas">, hoje = hojeIso()): Parcel
 }
 export function climaParcela(p: Pick<Parcela, "venc" | "recebidoEm">, hoje = hojeIso()): Clima {
   if (p.recebidoEm) return "sol";
+  if (!p.venc) return "aberto";
   const d = diasEntre(hoje, p.venc);
   return d < 0 ? "tempestade" : d === 0 ? "chuva" : d <= 7 ? "nublado" : "aberto";
 }
 export function quandoParcela(p: Pick<Parcela, "venc" | "recebidoEm">, hoje = hojeIso()) {
   if (p.recebidoEm) return p.recebidoEm === hoje ? "recebida hoje" : `recebida em ${p.recebidoEm.slice(8, 10)}/${p.recebidoEm.slice(5, 7)}`;
+  if (!p.venc) return "sem data";
   const d = diasEntre(hoje, p.venc);
   if (d < -1) return `atrasada há ${-d} dias`;
   if (d === -1) return "venceu ontem";
@@ -131,8 +139,8 @@ const quem = (eu: Eu) => ({ pid: eu.pid, nome: eu.nome });
 function limpo(d: DadosRecebivel) {
   const docu = lerDocumento(d.documento);
   const parcelas = d.parcelas
-    .map((p) => ({ venc: p.venc, valor: centavos(p.valor), recebidoEm: p.recebidoEm || null, valorRecebido: p.recebidoEm ? centavos(p.valorRecebido ?? p.valor) : null }))
-    .sort((a, b) => a.venc.localeCompare(b.venc))
+    .map((p) => ({ venc: iso(p.venc), valor: centavos(p.valor), recebidoEm: p.recebidoEm || null, valorRecebido: p.recebidoEm ? centavos(p.valorRecebido ?? p.valor) : null }))
+    .sort(porVenc)
     .slice(0, MAX_PARCELAS);
   const abertas = parcelas.filter((p) => !p.recebidoEm);
   return {
@@ -144,7 +152,7 @@ function limpo(d: DadosRecebivel) {
     obs: d.obs.trim().slice(0, 1000),
     parcelas,
     situacao: abertas.length ? "aberto" : "quitado",
-    proxVenc: abertas[0]?.venc || null,
+    proxVenc: abertas.find((p) => p.venc)?.venc || null,
     mesesRecebidos: [...new Set(parcelas.filter((p) => p.recebidoEm).map((p) => p.recebidoEm!.slice(0, 7)))].sort(),
   };
 }

@@ -254,6 +254,16 @@ service cloud.firestore {
       allow delete: if boletosEditar();
     }
 
+    // anotações da aba (texto livre da equipe, ex.: milhas a verificar): um documento só, mesmo acesso da aba
+    match /anotacoes/{id} {
+      allow read: if id == 'receber' && boletosVer();
+      allow create, update: if id == 'receber' && boletosEditar()
+        && request.resource.data.keys().hasOnly(['texto', 'atualizadoPor', 'atualizadoEm'])
+        && texto(request.resource.data.texto, 20000)
+        && souEu(request.resource.data.atualizadoPor) && request.resource.data.atualizadoEm == request.time;
+      allow delete: if false;
+    }
+
     // anexos dos boletos (PDF do boleto, comprovante): guardados em partes de até ~700 KB
     match /arquivos/{aid} {
       allow read: if boletosVer();

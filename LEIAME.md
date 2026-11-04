@@ -6,7 +6,7 @@ Um site só, com login por **nome + PIN**, e cada sistema numa aba:
 |---|---|---|
 | **Oktoplus** | Quem está com cada conta Oktoplus (pegar, devolver, esgotou, histórico) e **Logins** (CPF, senha e e-mail das contas e dos outros sistemas da agência) | Firestore (contas copiadas do Neon uma vez; logins colados da planilha) |
 | **Sala VIP** | O mesmo sistema de antes, com o painel "Emitir hoje" | Firestore, **os mesmos dados de hoje** (coleção `usos`) |
-| **Valores a receber** | **A receber**: quem deve, CPF/CNPJ, prazo e parcelas · **Boletos a pagar**: os boletos da agência, como antes. Tema de céu e nuvens | Firestore (`receber` e `boletos`) |
+| **Valores a receber** | **A receber**: quem deve, CPF/CNPJ, prazo (opcional) e parcelas · **Boletos a pagar**: os boletos da agência, como antes · **Anotações**: texto livre da equipe. Tema de céu e nuvens | Firestore (`receber`, `boletos` e `anotacoes`) |
 | **Passagens** | Só passagens em promoção **com preço**, num painel de embarque: destaques, radar saindo de Teresina, filtros, texto pronto para o WhatsApp | Firestore (`promocoes`), gravado pelo robô |
 | **Milhas** | Só ofertas para **comprar milhas e pontos** nos programas brasileiros (desconto na compra e milheiro) | Firestore (`promocoes`), gravado pelo robô |
 | **Operação** | Atalho para o THE TURISMO Operação, que continua no Claude | Claude |
@@ -43,6 +43,7 @@ Hosting (o site), Authentication (o login) e Firestore (os dados).
 | `src/modulos/salavip/salavip.js` | A Sala VIP: o mesmo código do sistema antigo, agora dentro da aba |
 | `src/modulos/boletos/linha.ts` | Leitura da linha digitável (FEBRABAN): banco, valor, vencimento e dígitos |
 | `src/modulos/boletos/Receber.tsx` e `recebiveis.ts` | Valores a receber: tela, parcelas e gravação |
+| `src/modulos/boletos/Notas.tsx` | Anotações da aba Valores a receber |
 | `src/lib/documento.ts` | CPF, CNPJ e telefone: conferir os dígitos e formatar |
 | `robo/` | O robô de promoções: fontes, leitor de feeds, extrator de preço/milhas/bônus, gravação e radar |
 | `src/modulos/promocoes/` | As abas Passagens e Milhas |
@@ -115,18 +116,23 @@ e volta no passo 5, já no endereço novo.
 
 ## Valores a receber
 
-- A aba se chama **Valores a receber** e tem duas partes: **A receber** (abre primeiro) e **Boletos a pagar**
-  (os boletos de sempre, sem mudança). Endereços: `#/boletos` e `#/boletos/pagar`. Por dentro a aba continua
-  com o nome `boletos`, então os acessos de cada pessoa não mudaram.
+- A aba se chama **Valores a receber** e tem três partes: **A receber** (abre primeiro), **Boletos a pagar**
+  (os boletos de sempre, sem mudança) e **Anotações**. Endereços: `#/boletos`, `#/boletos/pagar` e `#/boletos/notas`.
+  Por dentro a aba continua com o nome `boletos`, então os acessos de cada pessoa não mudaram.
 - **A receber** (coleção `receber`): nome do devedor, CPF ou CNPJ (confere os dígitos; se não conferir, pede
   para clicar de novo), data de nascimento (só para CPF), telefone/WhatsApp, referência da venda, observações
   e o valor, que pode ser dividido em até 60 parcelas mensais (os centavos que sobram vão nas primeiras).
+  O prazo é opcional: sem data, o valor (ou a parcela) fica no grupo **Sem data**, depois dos que têm vencimento,
+  e a mensagem de cobrança não fala em data.
 - Cada cartão mostra o "tempo" da próxima parcela (tempestade = atrasada, chuva = hoje, nublado = 7 dias),
   o progresso das parcelas e um botão do WhatsApp com a mensagem de cobrança pronta.
 - **Marcar como recebido**: escolhe uma ou várias parcelas. Se recebeu menos que a parcela, a diferença pode
   ficar em aberto com o mesmo vencimento. **Recebidos** mostra o que entrou em cada mês; dá para desfazer.
 - O botão de baixar gera uma planilha (CSV) das parcelas em aberto.
 - O selo da aba soma o que vence hoje ou atrasou nas duas partes.
+- **Anotações** (documento `anotacoes/receber`): um texto livre da equipe para o que ainda não tem valor ou data
+  (ex.: milhas a verificar). Salva sozinho 1 segundo depois de parar de digitar e mostra quem mudou por último.
+  Quem só vê a aba lê, mas não edita; ninguém apaga o documento.
 - Quem vê e quem edita é o mesmo nível de antes (**Só ver** / **Cadastrar e editar**), garantido nas regras do banco.
 
 ## Robô de promoções (abas Passagens e Milhas)

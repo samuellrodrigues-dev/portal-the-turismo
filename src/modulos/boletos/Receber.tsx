@@ -9,11 +9,14 @@ import { CEU, Dialogo, IconeClima, Previsao, SeletorMes, erroDe, semAcento, useF
 import type { Clima } from "./dados";
 import {
   MAX_PARCELAS, climaParcela, climaReceber, criarRecebivel, desfazerRecebimento, dividir, emAberto, emFoco, excluirRecebivel,
-  mesesDepois, numeradas, parcelasRecebidasNoMes, quandoParcela, receberParcelas, saldo, salvarRecebivel, useRecebidosNoMes,
+  mesesDepois, numeradas, parcelasRecebidasNoMes, quandoParcela, receberParcelas, saldo, salvarRecebivel, semData, useRecebidosNoMes,
   type ParcelaN, type Recebivel,
 } from "./recebiveis";
 
-const ROTULO: Record<Clima, string> = { tempestade: "Atrasados", chuva: "Vencem hoje", nublado: "Próximos 7 dias", aberto: "Mais adiante", sol: "Recebidos" };
+type Grupo = Clima | "semdata";
+const ROTULO: Record<Grupo, string> = { tempestade: "Atrasados", chuva: "Vencem hoje", nublado: "Próximos 7 dias", aberto: "Mais adiante", semdata: "Sem data", sol: "Recebidos" };
+/** Data da parcela, ou "sem data" quando não foi combinada. */
+const dataOu = (iso: string) => brData(iso) || "sem data";
 const soma = (l: { valor: number }[]) => Math.round(l.reduce((t, p) => t + p.valor, 0) * 100) / 100;
 
 const ICO = {
@@ -29,7 +32,8 @@ function mensagemCobranca(r: Recebivel, foco: ParcelaN[], hoje: string) {
   const ref = r.referencia ? ` referente a ${r.referencia}` : "";
   const p = foco[0];
   if (!p) return "";
-  if (foco.length > 1) return `${ola} Aqui é da THE TURISMO. Passando para lembrar das parcelas em aberto${ref}, que somam ${brl(soma(foco))}, a primeira com vencimento em ${brData(p.venc)}.`;
+  if (foco.length > 1) return `${ola} Aqui é da THE TURISMO. Passando para lembrar das parcelas em aberto${ref}, que somam ${brl(soma(foco))}${p.venc ? `, a primeira com vencimento em ${brData(p.venc)}` : ""}.`;
+  if (!p.venc) return `${ola} Aqui é da THE TURISMO. Passando para lembrar do pagamento de ${brl(p.valor)}${ref}.`;
   const venceu = p.venc < hoje ? "que venceu" : "com vencimento";
   return `${ola} Aqui é da THE TURISMO. Passando para lembrar do pagamento de ${brl(p.valor)}${ref}, ${venceu} em ${brData(p.venc)}.`;
 }
@@ -86,7 +90,7 @@ function Cartao({ r, pode, hoje, eu, aoEditar, aoReceber }: { r: Recebivel; pode
                 return (
                   <li key={x.i} className={`p-${cp}`}>
                     <span className="n">{x.i + 1}/{total}</span>
-                    <span className="d">{brData(x.venc)}</span>
+                    <span className="d">{dataOu(x.venc)}</span>
                     <b>{brl(x.recebidoEm ? x.valorRecebido ?? x.valor : x.valor)}</b>
                     <span className={`quando q-${cp}`}>{quandoParcela(x, hoje)}</span>
                     {pode && (x.recebidoEm
@@ -105,7 +109,10 @@ function Cartao({ r, pode, hoje, eu, aoEditar, aoReceber }: { r: Recebivel; pode
       <div className="nuvem-valor">
         <b>{brl(soma(foco))}</b>
         {p && <span className={`quando q-${c}`}>{quando}</span>}
-        {p && <small>{total > 1 ? `${varias ? "parcelas" : "parcela"} ${foco.map((x) => x.i + 1).join(", ")}/${total} · ` : ""}{brData(p.venc)}{varias ? ` a ${brData(foco[foco.length - 1].venc).slice(0, 5)}` : ""}</small>}
+        {p && (total > 1 || p.venc) && <small>{[
+          total > 1 ? `${varias ? "parcelas" : "parcela"} ${foco.map((x) => x.i + 1).join(", ")}/${total}` : "",
+          p.venc ? `${brData(p.venc)}${varias ? ` a ${dataOu(foco[foco.length - 1].venc).slice(0, 5)}` : ""}` : "",
+        ].filter(Boolean).join(" · ")}</small>}
       </div>
       <div className="nuvem-acoes" ref={ref}>
         {wpp && <a className="bol-icone wpp" href={wpp} target="_blank" rel="noopener noreferrer" title="Cobrar no WhatsApp" aria-label={`Cobrar ${r.devedor} no WhatsApp`}>{ICO.wpp}</a>}
@@ -195,7 +202,7 @@ function FormRecebivel({ eu, r, aoFechar }: { eu: Eu; r: Recebivel | null; aoFec
       if (l.recebidoEm) { parcelas.push({ venc: l.venc, valor: lerValor(l.valor) ?? l.valorRecebido ?? 0, recebidoEm: l.recebidoEm, valorRecebido: l.valorRecebido }); continue; }
       const v = lerValor(l.valor);
       if (v == null || Number.isNaN(v) || v <= 0) return setErro(tabela ? `O valor ${qual} não ficou claro. Use, por exemplo, 450 ou 450,00.` : "O valor não ficou claro. Use, por exemplo, 450 ou 450,00.");
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(l.venc)) return setErro(tabela ? `Escolha o vencimento ${qual}.` : "Escolha o prazo para receber.");
+      if (l.venc && !/^\d{4}-\d{2}-\d{2}$/.test(l.venc)) return setErro(tabela ? `O vencimento ${qual} não ficou certo.` : "O prazo para receber não ficou certo.");
       parcelas.push({ venc: l.venc, valor: v, recebidoEm: null, valorRecebido: null });
     }
     setOcupado(true);
@@ -211,7 +218,7 @@ function FormRecebivel({ eu, r, aoFechar }: { eu: Eu; r: Recebivel | null; aoFec
   const dicaDoc = !documento.trim() ? "" : docu.tipo ? (docu.confere ? `${ehCnpj ? "CNPJ" : "CPF"} confere` : `${ehCnpj ? "CNPJ" : "CPF"} não confere: confira os números`) : "CPF tem 11 números; CNPJ, 14";
 
   return (
-    <Dialogo aberto aoFechar={aoFechar} classe="rec-dlg" titulo={r ? "Editar valor a receber" : "Novo valor a receber"} sub="Quem deve, quanto e até quando. Pode dividir em parcelas."
+    <Dialogo aberto aoFechar={aoFechar} classe="rec-dlg" titulo={r ? "Editar valor a receber" : "Novo valor a receber"} sub="Quem deve, quanto e, se já tiver, até quando. Pode dividir em parcelas."
       rodape={<>
         <span className="espaco" />
         <button type="button" className="bol-btn" onClick={aoFechar}>Cancelar</button>
@@ -259,7 +266,7 @@ function FormRecebivel({ eu, r, aoFechar }: { eu: Eu; r: Recebivel | null; aoFec
                   onChange={(e) => { setN(e.target.value); if (e.target.value) refazer(total, e.target.value, primeiro); }}
                   onBlur={() => setN(String(qtd))} />
               </label>
-              <label className="bol-campo"><span>{qtd > 1 ? "1ª parcela vence em" : "Prazo para receber"}</span>
+              <label className="bol-campo"><span>{qtd > 1 ? "1ª parcela vence em" : "Prazo para receber"} <em>opcional</em></span>
                 <input type="date" value={primeiro} onChange={(e) => { setPrimeiro(e.target.value); refazer(total, n, e.target.value); }} />
               </label>
             </div>
@@ -272,7 +279,7 @@ function FormRecebivel({ eu, r, aoFechar }: { eu: Eu; r: Recebivel | null; aoFec
                   <span className="n">{i + 1}/{linhas.length}</span>
                   {l.recebidoEm ? (
                     <>
-                      <span className="d">{brData(l.venc)}</span>
+                      <span className="d">{dataOu(l.venc)}</span>
                       <b>{brl(l.valorRecebido ?? lerValor(l.valor) ?? 0)}</b>
                       <span className="quando q-sol">{quandoParcela(l, hoje)}</span>
                     </>
@@ -292,9 +299,10 @@ function FormRecebivel({ eu, r, aoFechar }: { eu: Eu; r: Recebivel | null; aoFec
               <span>{plural(linhas.length, "parcela", "parcelas")} · soma <b>{brl(somaLinhas)}</b>{difere && <em> · diferente do valor total ({brl(totalDigitado!)})</em>}</span>
               {linhas.length < MAX_PARCELAS && <button type="button" className="bol-link" onClick={adicionar}>Adicionar parcela</button>}
             </div>
-            {!comRecebidas && <p className="bol-nota">Dá para mudar a data e o valor de cada parcela. Mudar o valor total, as parcelas ou o 1º vencimento refaz a divisão.</p>}
+            {!comRecebidas && <p className="bol-nota">Dá para mudar a data e o valor de cada parcela. Mudar o valor total, as parcelas ou o 1º vencimento refaz a divisão. Parcela sem data fica em “Sem data” até alguém escolher o vencimento.</p>}
           </>
         )}
+        {!tabela && !comRecebidas && !primeiro && <p className="bol-nota">Sem prazo, o valor fica em “Sem data” até alguém escolher o vencimento.</p>}
       </section>
 
       <label className="bol-campo largo"><span>Observações <em>opcional</em></span>
@@ -348,7 +356,7 @@ function Receber({ eu, r, inicial, aoFechar }: { eu: Eu; r: Recebivel; inicial?:
               <label key={p.i} className={sel.includes(p.i) ? "on" : ""}>
                 <input type="checkbox" checked={sel.includes(p.i)} onChange={(e) => setSel((s) => (e.target.checked ? [...s, p.i] : s.filter((x) => x !== p.i)))} />
                 <span className="n">{p.i + 1}/{total}</span>
-                <span className="d">{brData(p.venc)}</span>
+                <span className="d">{dataOu(p.venc)}</span>
                 <span className={`quando q-${cp}`}>{quandoParcela(p, hoje)}</span>
                 <b>{brl(p.valor)}</b>
               </label>
@@ -390,8 +398,8 @@ export function SecaoReceber({ eu, pode, hoje, abertos, erro, topo }: { eu: Eu; 
   const doMesAtual = useRecebidosNoMes(mesAtual());
 
   const grupos = useMemo(() => {
-    const g: Record<Clima, Recebivel[]> = { tempestade: [], chuva: [], nublado: [], aberto: [], sol: [] };
-    (abertos || []).forEach((r) => g[climaReceber(r, hoje)].push(r));
+    const g: Record<Grupo, Recebivel[]> = { tempestade: [], chuva: [], nublado: [], aberto: [], semdata: [], sol: [] };
+    (abertos || []).forEach((r) => g[semData(r) ? "semdata" : climaReceber(r, hoje)].push(r));
     return g;
   }, [abertos, hoje]);
   const recebidasHoje = useMemo(() => (doMesAtual ? parcelasRecebidasNoMes(doMesAtual, mesAtual()) : null), [doMesAtual]);
@@ -458,7 +466,7 @@ export function SecaoReceber({ eu, pode, hoje, abertos, erro, topo }: { eu: Eu; 
             </div>
           ) : (
             <>
-              {(["tempestade", "chuva", "nublado", "aberto"] as Clima[]).map((c) => {
+              {(["tempestade", "chuva", "nublado", "aberto", "semdata"] as Grupo[]).map((c) => {
                 const l = grupos[c].filter(bate);
                 if (!l.length) return null;
                 return (
@@ -490,7 +498,7 @@ export function SecaoReceber({ eu, pode, hoje, abertos, erro, topo }: { eu: Eu; 
                     <IconeClima c="sol" tam={34} />
                     <div className="q">
                       <b>{r.devedor}</b>
-                      <small>{[r.referencia, r.parcelas.length > 1 ? `parcela ${p.i + 1}/${r.parcelas.length}` : "", `venc. ${brData(p.venc)}`].filter(Boolean).join(" · ")}</small>
+                      <small>{[r.referencia, r.parcelas.length > 1 ? `parcela ${p.i + 1}/${r.parcelas.length}` : "", p.venc ? `venc. ${brData(p.venc)}` : "sem data"].filter(Boolean).join(" · ")}</small>
                     </div>
                     <span className="quando q-sol">{quandoParcela(p, hoje)}</span>
                     <b className="v">{brl(p.valorRecebido ?? p.valor)}</b>
