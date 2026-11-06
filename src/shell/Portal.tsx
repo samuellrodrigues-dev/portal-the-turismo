@@ -197,7 +197,7 @@ export function Portal({ eu }: { eu: Eu }) {
           {atual === "boletos" && <Boletos eu={eu} sub={sub} />}
           {atual === "operacao" && <Operacao />}
           {atual === "passagens" && <Passagens eu={eu} />}
-          {atual === "milhas" && <Milhas eu={eu} />}
+          {atual === "milhas" && <Milhas eu={eu} sub={sub} />}
           {atual === "equipe" && eu.admin && <Equipe eu={eu} />}
           {atual === "pin" && <MeuPin eu={eu} />}
           {!abas.length && atual === "pin" && null}

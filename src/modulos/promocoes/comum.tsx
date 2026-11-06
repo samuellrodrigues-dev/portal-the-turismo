@@ -3,6 +3,13 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "../../shell/toast";
 import { copiar, ha, horaDe, marcarVisita, textoWhats, ultimaVisita, type Promo, type StatusFonte, type TipoPromo } from "./dados";
 
+/** Cor de cada programa de milhas/pontos, só como detalhe (cartões das ofertas e das milhas de clientes). */
+export const COR: Record<string, string> = {
+  Smiles: "#F2711C", "LATAM Pass": "#C8174A", "Azul Fidelidade": "#1F5FD6", Livelo: "#D81B7A", Esfera: "#D8312A",
+  Átomos: "#444B55", "Inter Loop": "#FF7A00", Dotz: "#E4572E", "Km de Vantagens": "#0E7C66", Coopera: "#2E7D32", Curtaí: "#6A3FB5",
+  "TAP Miles&Go": "#0F8A4F", AAdvantage: "#0A6FB8",
+};
+
 export const ICO = {
   abrir: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></svg>,
   copiar: <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" /><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" /></svg>,

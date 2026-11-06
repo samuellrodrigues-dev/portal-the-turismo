@@ -35,6 +35,7 @@ checar(!(await pode(() => getDoc(doc(c.db, "promocoes", "passagens")))), "não l
 checar(!(await pode(() => getDocs(query(collection(c.db, "usos"), where("status", "==", "Pendente"))))), "não lê Sala VIP");
 checar(!(await pode(() => updateDoc(doc(c.db, "publico", "equipe"), { pessoas: [] }))), "não mexe na lista de nomes");
 checar(!(await pode(() => getDocs(collection(c.db, "okto_acessos")))), "não lê os logins da Oktoplus");
+checar(!(await pode(() => getDocs(collection(c.db, "milhas_clientes")))), "não lê as milhas de clientes");
 await deleteApp(c.app);
 
 console.log("alguém que criou conta por fora (sem cadastro)");
@@ -54,6 +55,7 @@ checar(await pode(() => getDoc(doc(c.db, "promocoes", "passagens"))), "lê as pr
 checar(!(await pode(() => setDoc(doc(c.db, "promocoes", "passagens"), { itens: [] }))), "não grava nas promoções (só o robô)");
 checar(!(await pode(() => getDocs(collection(c.db, "boletos")))), "não lê boletos");
 checar(!(await pode(() => getDocs(collection(c.db, "receber")))), "não lê valores a receber");
+checar(!(await pode(() => getDocs(collection(c.db, "milhas_clientes")))), "lê as ofertas de milhas, mas não as milhas de clientes");
 checar(!(await pode(() => getDocs(query(collection(c.db, "usos"), where("status", "==", "Pendente"))))), "não lê Sala VIP");
 checar(!(await pode(() => getDocs(collection(c.db, "okto_eventos")))), "não lê o registro (só administrador)");
 checar(!(await pode(() => updateDoc(doc(c.db, "uids", uidL), { admin: true }))), "não vira administradora");
@@ -153,6 +155,46 @@ checar(!(await pode(() => getDocs(collection(c.db, "receber")))), "sem a aba Val
 checar(!(await pode(() => getDoc(doc(c.db, "anotacoes", "receber")))), "sem a aba não lê as anotações");
 await deleteApp(c.app);
 
+console.log("Milhas de clientes: Denise só ver, depois cadastrar e editar");
+const souD = { pid: denise.id.stringValue, nome: "Denise" };
+const abasD = (milhas, ativo = true) => gravarAdmin("uids/" + uidD, { pid: souD.pid, nome: "Denise", admin: false, ativo, abas: { oktoplus: "usar", salavip: "", boletos: "", operacao: "", milhas } });
+const mc = (x = {}) => ({ cliente: "Cliente teste regras", documento: "", programa: "Smiles", quantidade: 10000, data: "2026-11-05", valor: null, obs: "", criadoPor: souD, criadoEm: serverTimestamp(), atualizadoPor: souD, atualizadoEm: serverTimestamp(), ...x });
+await abasD("ver");
+c = await cliente("Denise", pins.Denise);
+const mcs = await getDocs(collection(c.db, "milhas_clientes"));
+checar(mcs.size > 0, "só ver: lê as milhas de clientes (" + mcs.size + ")");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc()))), "só ver: não cadastra");
+checar(!(await pode(() => updateDoc(doc(c.db, "milhas_clientes", mcs.docs[0].id), { obs: "mexi", atualizadoPor: souD, atualizadoEm: serverTimestamp() }))), "só ver: não edita");
+checar(!(await pode(() => deleteDoc(doc(c.db, "milhas_clientes", mcs.docs[0].id)))), "só ver: não exclui");
+await deleteApp(c.app);
+await abasD("editar");
+c = await cliente("Denise", pins.Denise);
+const mcNovo = await addDoc(collection(c.db, "milhas_clientes"), mc({ documento: "36060710433", valor: 165.5 })).catch((e) => { console.log("    (erro:", e.code, ")"); return null; });
+checar(!!mcNovo, "cadastrar e editar: cadastra (com CPF e valor com centavos)");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ quantidade: 1500.5 })))), "quantidade quebrada é recusada");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ quantidade: 0 })))), "quantidade zero é recusada");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ quantidade: "10000" })))), "quantidade em texto é recusada");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ documento: "1234567890" })))), "CPF com 10 números é recusado");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ cliente: "" })))), "sem nome do cliente é recusado");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ programa: "" })))), "sem programa é recusado");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ data: "05/11/2026" })))), "data fora do formato é recusada");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ valor: -1 })))), "valor negativo é recusado");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ extra: 1 })))), "campo fora do combinado é recusado");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ criadoPor: { pid: "outro", nome: "Outra pessoa" } })))), "não cadastra em nome de outra pessoa");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ atualizadoPor: { pid: "outro", nome: "Outra pessoa" } })))), "não assina como outra pessoa");
+if (mcNovo) {
+  checar(await pode(() => updateDoc(mcNovo, { quantidade: 12000, atualizadoPor: souD, atualizadoEm: serverTimestamp() })), "edita a quantidade");
+  checar(!(await pode(() => updateDoc(mcNovo, { criadoPor: { pid: "outro", nome: "Outra pessoa" }, atualizadoPor: souD, atualizadoEm: serverTimestamp() }))), "não troca quem cadastrou");
+  checar(!(await pode(() => updateDoc(mcNovo, { quantidade: 13000, atualizadoPor: { pid: "outro", nome: "Outra pessoa" }, atualizadoEm: serverTimestamp() }))), "não edita assinando como outra pessoa");
+  checar(await pode(() => deleteDoc(mcNovo)), "exclui");
+}
+await deleteApp(c.app);
+await abasD("editar", false);
+c = await cliente("Denise", pins.Denise);
+checar(!(await pode(() => getDocs(collection(c.db, "milhas_clientes")))), "desativada não lê as milhas de clientes, mesmo com o acesso");
+await deleteApp(c.app);
+await abasD("");
+
 console.log("João Pedro (Oktoplus admin, sem ser administrador do sistema)");
 c = await cliente("João Pedro", pins.joao);
 checar(await pode(() => getDocs(collection(c.db, "okto_eventos"))), "lê o registro do Oktoplus");
@@ -187,6 +229,8 @@ checar(!(await pode(() => setDoc(doc(c.db, "anotacoes", "receber"), nota({ texto
 checar(!(await pode(() => setDoc(doc(c.db, "anotacoes", "receber"), nota({ atualizadoPor: { pid: "outro", nome: "Outra pessoa" } })))), "não assina anotação como outra pessoa");
 checar(!(await pode(() => deleteDoc(doc(c.db, "anotacoes", "receber")))), "ninguém apaga as anotações");
 if (notaAntes) await setDoc(doc(c.db, "anotacoes", "receber"), nota({ texto: notaAntes.texto }));
+checar(!(await pode(() => getDocs(collection(c.db, "milhas_clientes")))), "edita Valores a receber, mas sem o acesso não lê as milhas de clientes");
+checar(!(await pode(() => addDoc(collection(c.db, "milhas_clientes"), mc({ criadoPor: souJ, atualizadoPor: souJ })))), "sem o acesso não cadastra milhas de clientes");
 checar(!(await pode(() => getDocs(collection(c.db, "pessoas")))), "não lê a equipe");
 checar(!(await pode(() => updateDoc(doc(c.db, "publico", "equipe"), { pessoas: [] }))), "não mexe na lista de nomes");
 await deleteApp(c.app);

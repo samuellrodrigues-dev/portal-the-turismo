@@ -12,7 +12,9 @@ export type NivelOkto = "" | "usar" | "admin";
 export type NivelVip = "" | "operador" | "admin";
 export type NivelBoletos = "" | "ver" | "editar";
 export type NivelOperacao = "" | "ver";
-export type Abas = { oktoplus: NivelOkto; salavip: NivelVip; boletos: NivelBoletos; operacao: NivelOperacao };
+/** Milhas de clientes: a parte "Recebidas de clientes" da aba Milhas (as ofertas continuam abertas a toda a equipe). */
+export type NivelMilhas = "" | "ver" | "editar";
+export type Abas = { oktoplus: NivelOkto; salavip: NivelVip; boletos: NivelBoletos; operacao: NivelOperacao; milhas: NivelMilhas };
 export type ModuloId = keyof Abas;
 
 /** Quem está usando o sistema agora (documento uids/{uid}). */
@@ -26,14 +28,15 @@ export type Pessoa = {
   aparelho: string; pinDigitos: number; oktoId?: number | null;
 };
 
-export const ABAS_VAZIAS: Abas = { oktoplus: "", salavip: "", boletos: "", operacao: "" };
-export const ABAS_TODAS: Abas = { oktoplus: "admin", salavip: "admin", boletos: "editar", operacao: "ver" };
+export const ABAS_VAZIAS: Abas = { oktoplus: "", salavip: "", boletos: "", operacao: "", milhas: "" };
+export const ABAS_TODAS: Abas = { oktoplus: "admin", salavip: "admin", boletos: "editar", operacao: "ver", milhas: "editar" };
 
 export const MODULOS: { id: ModuloId; nome: string; niveis: [string, string][] }[] = [
   { id: "oktoplus", nome: "Oktoplus", niveis: [["", "Sem acesso"], ["usar", "Usar contas"], ["admin", "Administrar"]] },
   { id: "salavip", nome: "Sala VIP", niveis: [["", "Sem acesso"], ["operador", "Operador"], ["admin", "Administrar"]] },
   { id: "boletos", nome: "Valores a receber", niveis: [["", "Sem acesso"], ["ver", "Só ver"], ["editar", "Cadastrar e editar"]] },
   { id: "operacao", nome: "Operação", niveis: [["", "Sem acesso"], ["ver", "Ver o atalho"]] },
+  { id: "milhas", nome: "Milhas de clientes", niveis: [["", "Sem acesso"], ["ver", "Só ver"], ["editar", "Cadastrar e editar"]] },
 ];
 
 /** O que a pessoa pode em cada aba (administrador pode tudo). */
@@ -47,6 +50,7 @@ export function normalizarAbas(a: Partial<Abas> | undefined | null): Abas {
     salavip: x.salavip === "operador" || x.salavip === "admin" ? x.salavip : "",
     boletos: x.boletos === "ver" || x.boletos === "editar" ? x.boletos : "",
     operacao: x.operacao === "ver" ? "ver" : "",
+    milhas: x.milhas === "ver" || x.milhas === "editar" ? x.milhas : "",
   };
 }
 
@@ -67,7 +71,7 @@ export const senhaDe = (pin: string) => `tt-${pin}-pin`;
 
 /** Mais de 4 números para quem vê dados de clientes ou administra. */
 export const precisaPin6 = (admin: boolean, abas: Abas) =>
-  admin || !!abas.salavip || !!abas.boletos || !!abas.operacao || abas.oktoplus === "admin";
+  admin || !!abas.salavip || !!abas.boletos || !!abas.operacao || !!abas.milhas || abas.oktoplus === "admin";
 export const digitosPara = (admin: boolean, abas: Abas) => (precisaPin6(admin, abas) ? 6 : 4);
 
 const aleatorio = (n: number) => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };

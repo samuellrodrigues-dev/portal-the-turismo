@@ -1,19 +1,16 @@
-/* Aba Milhas: só ofertas para COMPRAR milhas e pontos nos programas brasileiros, em cartões de fidelidade. */
-import { useMemo, useState } from "react";
+/* Aba Milhas: ofertas para COMPRAR milhas e pontos nos programas brasileiros, em cartões de fidelidade,
+   e (para quem tem o acesso "Milhas de clientes") as milhas que a agência recebeu de clientes. */
+import { useMemo, useState, type ReactNode } from "react";
 import "@fontsource/jetbrains-mono/latin-700.css";
 import "@fontsource/jetbrains-mono/latin-800.css";
-import type { Eu } from "../../equipe/dados";
+import { nivel, type Eu } from "../../equipe/dados";
 import { brl } from "../../lib/formato";
 import { hojeIso } from "../../lib/tempo";
 import { bate, ha, semAcento, situacao, useFeed, type Promo } from "./dados";
-import { BotaoCopiar, Fontes, ICO, LinksFontes, Vazio, useAgora, useVisita } from "./comum";
+import { BotaoCopiar, COR, Fontes, ICO, LinksFontes, Vazio, useAgora, useVisita } from "./comum";
+import { SecaoClientes } from "./MilhasClientes";
 import "./promocoes.css";
 
-// programas brasileiros (o robô já descarta os estrangeiros) e a cor de cada um, só como detalhe no cartão
-const COR: Record<string, string> = {
-  Smiles: "#F2711C", "LATAM Pass": "#C8174A", "Azul Fidelidade": "#1F5FD6", Livelo: "#D81B7A", Esfera: "#D8312A",
-  Átomos: "#444B55", "Inter Loop": "#FF7A00", Dotz: "#E4572E", "Km de Vantagens": "#0E7C66", Coopera: "#2E7D32", Curtaí: "#6A3FB5",
-};
 const PONTOS = ["Livelo", "Esfera", "Átomos", "Inter Loop", "Dotz", "Km de Vantagens", "Coopera", "Curtaí"];
 const corDe = (p: Promo) => COR[p.programas.find((x) => !PONTOS.includes(x)) || p.programas[0]] || "#8A877F";
 /** Só compra de milhas/pontos (o robô já filtra; isto cobre o que ficou de leituras antigas). */
@@ -90,7 +87,7 @@ function Recordes({ ativos, agora }: { ativos: Promo[]; agora: number }) {
   );
 }
 
-export default function Milhas({ eu }: { eu: Eu }) {
+function Ofertas({ eu, nav }: { eu: Eu; nav: ReactNode }) {
   const { feed, erro } = useFeed("milhas");
   const agora = useAgora();
   const visita = useVisita("milhas");
@@ -118,6 +115,7 @@ export default function Milhas({ eu }: { eu: Eu }) {
 
   return (
     <div className="pro mil">
+      {nav}
       <header className="mil-topo">
         <div>
           <span className="mil-etiqueta">Programas brasileiros</span>
@@ -174,4 +172,22 @@ export default function Milhas({ eu }: { eu: Eu }) {
       <p className="pro-rodape">Preço do milheiro e desconto mudam conforme o clube, o cartão e a categoria do cliente no programa. Confira no site do programa antes de comprar.</p>
     </div>
   );
+}
+
+const ICO_SECAO = {
+  ofertas: <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>,
+  clientes: <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20v-1a5.5 5.5 0 0 1 9.6-3.7" /><ellipse cx="17.5" cy="14" rx="4" ry="1.8" /><path d="M13.5 14v3.2c0 1 1.8 1.8 4 1.8s4-.8 4-1.8V14" /></svg>,
+};
+
+/** #/milhas → ofertas de compra · #/milhas/clientes → milhas recebidas de clientes (só com o acesso "Milhas de clientes"). */
+export default function Milhas({ eu, sub = "" }: { eu: Eu; sub?: string }) {
+  const verClientes = !!nivel(eu, "milhas");
+  const secao = verClientes && sub.split("/")[0] === "clientes" ? "clientes" : "ofertas";
+  const nav = verClientes ? (
+    <nav className="mil-nav" aria-label="Partes da aba Milhas">
+      <a href="#/milhas" aria-current={secao === "ofertas" ? "page" : undefined}>{ICO_SECAO.ofertas}Ofertas de compra</a>
+      <a href="#/milhas/clientes" aria-current={secao === "clientes" ? "page" : undefined}>{ICO_SECAO.clientes}Recebidas de clientes</a>
+    </nav>
+  ) : null;
+  return secao === "clientes" ? <SecaoClientes eu={eu} nav={nav} /> : <Ofertas eu={eu} nav={nav} />;
 }

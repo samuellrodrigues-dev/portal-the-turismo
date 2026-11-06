@@ -8,7 +8,7 @@ Um site só, com login por **nome + PIN**, e cada sistema numa aba:
 | **Sala VIP** | O mesmo sistema de antes, com o painel "Emitir hoje" | Firestore, **os mesmos dados de hoje** (coleção `usos`) |
 | **Valores a receber** | **A receber**: quem deve, CPF/CNPJ, prazo (opcional) e parcelas · **Boletos a pagar**: os boletos da agência, como antes · **Anotações**: texto livre da equipe. Tema de céu e nuvens | Firestore (`receber`, `boletos` e `anotacoes`) |
 | **Passagens** | Só passagens em promoção **com preço**, num painel de embarque: destaques, radar saindo de Teresina, filtros, texto pronto para o WhatsApp | Firestore (`promocoes`), gravado pelo robô |
-| **Milhas** | Só ofertas para **comprar milhas e pontos** nos programas brasileiros (desconto na compra e milheiro) | Firestore (`promocoes`), gravado pelo robô |
+| **Milhas** | **Ofertas de compra**: só ofertas para **comprar milhas e pontos** nos programas brasileiros (desconto na compra e milheiro) · **Recebidas de clientes**: as milhas que clientes passaram para a agência (só quem tem o acesso "Milhas de clientes") | Firestore (`promocoes`, gravado pelo robô, e `milhas_clientes`) |
 | **Operação** | Atalho para o THE TURISMO Operação, que continua no Claude | Claude |
 | **Equipe** | (só administrador) pessoas, PINs e o que cada uma vê | Firestore |
 
@@ -21,7 +21,7 @@ Hosting (o site), Authentication (o login) e Firestore (os dados).
 - Por trás, cada pessoa tem uma conta no Firebase Authentication com um e-mail interno
   (`…@pin.theturismo.example`, nenhum e-mail é enviado) e uma senha feita a partir do PIN.
 - PIN de **4 números** para quem só usa a Oktoplus; **6 números** para quem vê dados de clientes
-  (Sala VIP, Valores a receber, Operação) ou administra.
+  (Sala VIP, Valores a receber, Operação, Milhas de clientes) ou administra.
 - O Firebase bloqueia por alguns minutos depois de muitas tentativas erradas.
 - O administrador gera PIN novo para qualquer pessoa (o PIN antigo para de funcionar na hora)
   e desliga quem saiu da equipe. Cada um troca o próprio PIN em **Trocar meu PIN**.
@@ -47,6 +47,7 @@ Hosting (o site), Authentication (o login) e Firestore (os dados).
 | `src/lib/documento.ts` | CPF, CNPJ e telefone: conferir os dígitos e formatar |
 | `robo/` | O robô de promoções: fontes, leitor de feeds, extrator de preço/milhas/bônus, gravação e radar |
 | `src/modulos/promocoes/` | As abas Passagens e Milhas |
+| `src/modulos/promocoes/MilhasClientes.tsx` e `clientes.ts` | Milhas recebidas de clientes: tela, resumo do mês e gravação |
 | `.github/workflows/promocoes.yml` | Agenda do robô no GitHub (a cada 2 horas) |
 | `src/shell/FundoViagem.tsx` | O fundo animado: aviões cruzando a tela com o rastro e a etiqueta do voo |
 | `src/equipe/QuadroPins.tsx` | O quadro "PINs para entregar" |
@@ -135,6 +136,22 @@ e volta no passo 5, já no endereço novo.
   Quem só vê a aba lê, mas não edita; ninguém apaga o documento.
 - Quem vê e quem edita é o mesmo nível de antes (**Só ver** / **Cadastrar e editar**), garantido nas regras do banco.
 
+## Milhas recebidas de clientes
+
+- Fica em **Milhas → Recebidas de clientes** (endereço `#/milhas/clientes`). A parte **Ofertas de compra**
+  continua igual e aberta a toda a equipe.
+- Cada registro (coleção `milhas_clientes`) tem: cliente, CPF do titular (opcional; confere os dígitos),
+  programa (Smiles, LATAM Pass, Azul Fidelidade, TAP Miles&Go, AAdvantage, Livelo, Esfera ou outro),
+  quantidade de milhas, data do recebimento, valor pago ou abatido (opcional; o milheiro sai sozinho)
+  e observação. Fica guardado quem cadastrou e quem alterou por último.
+- A tela mostra um mês por vez (setas para os outros meses), o total do mês e um cartão por programa;
+  clicar no cartão filtra só aquele programa. A busca (nome, CPF, programa ou observação) procura em todos os meses.
+- Ao digitar o nome de um cliente que já passou milhas antes, o CPF vem sozinho.
+- **Planilha** baixa um CSV com o que está na tela (o mês, a busca ou o programa filtrado).
+- Quem vê e quem edita é o acesso **Milhas de clientes** em **Equipe** (Sem acesso / Só ver / Cadastrar e editar),
+  garantido nas regras do banco. Quem não tem o acesso não vê essa parte nem consegue ler os dados.
+  O administrador vê e edita tudo. Quem tem PIN de 4 números e ganha esse acesso precisa de um PIN novo (6 números).
+
 ## Robô de promoções (abas Passagens e Milhas)
 
 O robô fica na pasta `robo/`. Ele lê 24 fontes (blogs de promoção, blogs de milhas e buscas do Google Notícias),
@@ -219,7 +236,7 @@ Se mudar as regras: `firebase deploy --only firestore:rules` (ou tudo junto: `fi
 npm run build && npx vite preview --port 4173 &
 firebase emulators:start --only auth,firestore --project demo-portal
 # abra http://127.0.0.1:4173/?emulador
-node tests/e2e-1-equipe.mjs && node tests/e2e-2-oktoplus.mjs && node tests/e2e-5-logins.mjs && node tests/e2e-3-salavip.mjs && node tests/gerar-fixtures.mjs && node tests/e2e-4-boletos.mjs && node tests/e2e-6-receber.mjs && node tests/e2e-7-promocoes.mjs && node tests/regras.mjs
+node tests/e2e-1-equipe.mjs && node tests/e2e-2-oktoplus.mjs && node tests/e2e-5-logins.mjs && node tests/e2e-3-salavip.mjs && node tests/gerar-fixtures.mjs && node tests/e2e-4-boletos.mjs && node tests/e2e-6-receber.mjs && node tests/e2e-7-promocoes.mjs && node tests/e2e-8-milhas-clientes.mjs && node tests/regras.mjs
 ```
 
 ## Limites do plano gratuito

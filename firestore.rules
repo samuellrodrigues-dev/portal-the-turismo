@@ -12,6 +12,8 @@ rules_version = '2';
 //  abas.salavip          → '' | 'operador' | 'admin'
 //  abas.boletos          → '' | 'ver' | 'editar'   (aba "Valores a receber": boletos a pagar e valores a receber)
 //  abas.operacao         → '' | 'ver'   (é só um atalho; não há dados aqui)
+//  abas.milhas           → '' | 'ver' | 'editar'   (Milhas de clientes, dentro da aba Milhas;
+//                          as ofertas de compra da aba continuam abertas a toda a equipe)
 //
 //  As permissões são garantidas aqui, não só pela tela.
 // ═══════════════════════════════════════════════════════════════════════
@@ -34,6 +36,8 @@ service cloud.firestore {
     function vipOperador() { return ativo() && aba('salavip') == 'operador'; }
     function boletosEditar() { return admin() || (ativo() && aba('boletos') == 'editar'); }
     function boletosVer() { return boletosEditar() || (ativo() && aba('boletos') == 'ver'); }
+    function milhasEditar() { return admin() || (ativo() && aba('milhas') == 'editar'); }
+    function milhasVer() { return milhasEditar() || (ativo() && aba('milhas') == 'ver'); }
 
     function texto(v, max) { return v is string && v.size() <= max; }
     function dataIso(v) { return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'); }
@@ -281,6 +285,29 @@ service cloud.firestore {
     match /promocoes/{id} {
       allow read: if ativo();
       allow write: if false;
+    }
+
+    // ═══ Milhas de clientes (aba Milhas → Recebidas de clientes) ═══════
+    // Quem passou milhas para a agência: cliente, CPF (opcional), programa, quantidade, data e valor (opcional).
+    // Só quem tem o acesso "Milhas de clientes" lê; quem cadastra e edita assina com o próprio nome.
+    match /milhas_clientes/{id} {
+      function milhasValido(d) {
+        return d.keys().hasOnly(['cliente', 'documento', 'programa', 'quantidade', 'data', 'valor', 'obs', 'criadoPor', 'criadoEm', 'atualizadoPor', 'atualizadoEm'])
+          && d.cliente is string && d.cliente.size() > 0 && d.cliente.size() <= 120
+          && d.documento is string && d.documento.matches('^([0-9]{11})?$')
+          && d.programa is string && d.programa.size() > 0 && d.programa.size() <= 40
+          && d.quantidade is int && d.quantidade >= 1 && d.quantidade <= 100000000
+          && dataIso(d.data)
+          && (d.valor == null || (d.valor is number && d.valor >= 0 && d.valor <= 10000000))
+          && texto(d.obs, 500)
+          && souEu(d.atualizadoPor) && d.atualizadoEm == request.time;
+      }
+      allow read: if milhasVer();
+      allow create: if milhasEditar() && milhasValido(request.resource.data)
+        && souEu(request.resource.data.criadoPor) && request.resource.data.criadoEm == request.time;
+      allow update: if milhasEditar() && milhasValido(request.resource.data)
+        && request.resource.data.criadoPor == resource.data.criadoPor && request.resource.data.criadoEm == resource.data.criadoEm;
+      allow delete: if milhasEditar();
     }
 
     // configurações e marcas internas (ex.: quando os dados da Oktoplus foram trazidos)

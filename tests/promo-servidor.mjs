@@ -5,6 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 const h = (n) => new Date(Date.now() - n * 36e5).toUTCString();
+/** "até DD/MM" sempre uma semana à frente, para o teste não vencer com o calendário. */
+export const ATE = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Fortaleza", day: "2-digit", month: "2-digit" }).format(new Date(Date.now() + 7 * 864e5));
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const wp = (titulo, itens) => `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -39,11 +41,11 @@ export const ARQUIVOS = {
   "/pp.xml": wp("Passageiro de Primeira", [
     { t: "Só hoje! Smiles oferece até 80% de bônus nas transferências de pontos da Livelo", l: "https://passageirodeprimeira.com/so-hoje-smiles-80-livelo/", h: 4, c: ["Smiles", "Livelo"] },
     { t: "Smiles e Livelo: milheiro a partir de R$ 15,46 transferindo pontos mais dinheiro", l: "https://passageirodeprimeira.com/milheiro-smiles-livelo-1546/", h: 8 },
-    { t: "Esfera dá até 100% de bônus na transferência para a Azul Fidelidade até 05/11", l: "https://passageirodeprimeira.com/esfera-azul-100-bonus/", h: 20 },
+    { t: `Esfera dá até 100% de bônus na transferência para a Azul Fidelidade até ${ATE}`, l: "https://passageirodeprimeira.com/esfera-azul-100-bonus/", h: 20 },
     { t: "Clube Smiles a partir de R$ 21,90 por mês com 5 mil milhas de bônus", l: "https://passageirodeprimeira.com/clube-smiles-2190/", h: 30 },
     { t: "Azul Fidelidade vende pontos com 50% de desconto", l: "https://passageirodeprimeira.com/azul-pontos-50-off/", h: 10 },
     { t: "Como usar milhas para viajar de executiva", l: "https://passageirodeprimeira.com/como-executiva/", h: 12 },
-    { t: "Latam Pass: compre pontos com até 60% de desconto até 05/11", l: "https://passageirodeprimeira.com/latam-pass-compra-60/", h: 6 },
+    { t: `Latam Pass: compre pontos com até 60% de desconto até ${ATE}`, l: "https://passageirodeprimeira.com/latam-pass-compra-60/", h: 6 },
     { t: "Smiles oferece até 70% de bônus na transferência de pontos de parceiros + 75% OFF para compra de milhas", l: "https://passageirodeprimeira.com/smiles-70-bonus-75-off/", h: 9 },
     { t: "AAdvantage vende milhas com 50% de desconto", l: "https://passageirodeprimeira.com/aadvantage-50/", h: 5 },
     { t: "Livelo: compre pontos com 50% de desconto só hoje", l: "https://passageirodeprimeira.com/livelo-compra-50-hoje/", h: 1 },

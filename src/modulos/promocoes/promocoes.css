@@ -310,3 +310,122 @@ em.novo { font: 800 10.5px/1.3 var(--mono); font-style: normal; text-transform: 
   .pas-embarque .canhoto b { font-size: 20px; }
   .pas-voo .fonte { max-width: 110px; }
 }
+
+/* ═════════════════ MILHAS: as duas partes e as milhas de clientes ═════════════════ */
+
+.mil-nav { display: inline-flex; gap: 4px; max-width: 100%; margin: 0 0 22px; padding: 4px; border-radius: 14px; background: var(--tt-card); border: 1px solid var(--tt-linha); }
+.mil-nav a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 10px; color: var(--tt-mudo); font: 700 14px/1 var(--tt-sans); text-decoration: none; white-space: nowrap; }
+.mil-nav a svg { width: 17px; height: 17px; }
+.mil-nav a:hover { color: var(--tt-tx); background: var(--tt-suave); }
+.mil-nav a[aria-current=page] { background: #15181D; color: #fff; }
+@media (prefers-color-scheme: dark) { .mil-nav a[aria-current=page] { background: var(--tt-ouro); color: #17150D; } }
+
+.mcl-novo { min-height: 44px; padding: 0 18px; font-size: 15px; }
+.mcl-novo svg { width: 18px; height: 18px; stroke-width: 2.4; }
+.mcl-barra { margin: 22px 0 14px; }
+.mcl-mes { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.mcl-mes h2 { margin: 0; min-width: 190px; text-align: center; font: 800 21px/1.2 var(--tt-sans); }
+.mcl-mes button { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--tt-linha); background: var(--tt-card); color: var(--tt-tx); cursor: pointer; }
+.mcl-mes button:disabled { opacity: .35; cursor: default; }
+.mcl-mes button.mcl-hoje { width: auto; height: 30px; padding: 0 11px; border-radius: 999px; font: 600 12.5px/1 var(--tt-sans); color: var(--tt-mudo); }
+.mcl-buscando { margin: 0; font-weight: 700; color: var(--tt-mudo); }
+.mcl-barra .pro-btn:disabled { opacity: .5; cursor: default; }
+
+.mcl-resumo { display: grid; grid-template-columns: repeat(auto-fill, minmax(208px, 1fr)); gap: 12px; }
+.mcl-resumo .mil-recorde { min-height: 128px; width: 100%; font: inherit; }
+.mcl-resumo .mil-recorde b { font-size: 30px; }
+.mcl-resumo .mil-recorde em { text-transform: none; letter-spacing: 0; font-size: 12px; }
+.mcl-resumo .mcl-total { grid-column: span 2; cursor: default; }
+.mcl-resumo .mcl-total:hover { transform: none; }
+.mcl-resumo button.mil-recorde:focus-visible { outline: 3px solid var(--tt-ouro); outline-offset: 2px; }
+.mcl-resumo.filtrado button.mil-recorde[aria-pressed=false] { opacity: .45; }
+.mcl-resumo button.mil-recorde[aria-pressed=true] { box-shadow: 0 0 0 3px var(--tt-ouro), 0 18px 34px -22px color-mix(in srgb, var(--cor) 70%, #000); }
+
+.mcl-tabela { margin-top: 16px; border-radius: 18px; border: 1px solid var(--tt-linha); background: var(--tt-card); overflow: hidden; }
+.mcl-cab, .mcl-item { display: grid; grid-template-columns: 56px minmax(0, 1.7fr) minmax(0, 1fr) 128px 168px 74px; gap: 4px 16px; align-items: center; padding: 0 18px; }
+.mcl-cab { height: 40px; border-bottom: 1px solid var(--tt-linha); font: 700 10.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--tt-mudo); }
+.mcl-cab span:nth-child(4), .mcl-cab span:nth-child(5) { text-align: right; }
+.mcl-lista { list-style: none; margin: 0; padding: 0; }
+.mcl-item { position: relative; padding-top: 12px; padding-bottom: 12px; border-top: 1px solid var(--tt-linha); }
+.mcl-item:first-child { border-top: 0; }
+.mcl-item::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 3px 3px 0; background: var(--cor); }
+.mcl-data { display: grid; justify-items: center; width: 52px; padding: 7px 0 6px; border-radius: 11px; background: var(--tt-suave); line-height: 1; }
+.mcl-data b { font: 800 20px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.mcl-data span { margin-top: 3px; font: 700 10.5px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--tt-mudo); white-space: nowrap; }
+.mcl-quem { display: grid; min-width: 0; }
+.mcl-quem b { font-size: 15.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mcl-quem span { font-size: 12.5px; color: var(--tt-mudo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mcl-prog {
+  display: inline-flex; align-items: center; gap: 7px; justify-self: start; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  background: color-mix(in srgb, var(--cor) 13%, var(--tt-card)); color: color-mix(in srgb, var(--cor) 85%, var(--tt-tx)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mcl-prog i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cor); }
+.mcl-qtd, .mcl-valor { display: grid; justify-items: end; text-align: right; min-width: 0; }
+.mcl-qtd b { font: 800 19px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+.mcl-valor b { font: 700 15px/1.2 var(--mono); font-variant-numeric: tabular-nums; }
+.mcl-qtd span, .mcl-valor span { font-size: 12px; color: var(--tt-mudo); white-space: nowrap; }
+.mcl-valor .sem { font-style: italic; }
+.mcl-editar { justify-self: end; height: 32px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--tt-linha); background: transparent; color: var(--tt-tx); font: 600 13px/1 var(--tt-sans); cursor: pointer; }
+.mcl-editar:hover { border-color: var(--tt-mudo); }
+.mcl-editar.vazio { visibility: hidden; }
+.mcl-obs { grid-column: 2 / -1; margin: 4px 0 0; font-size: 13.5px; color: var(--tt-mudo); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* formulário */
+.mcl-dlg { width: min(640px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 0; border: 0; border-radius: 20px; background: var(--tt-card); color: var(--tt-tx); box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .45); overflow: hidden; }
+.mcl-dlg::backdrop { background: rgba(14, 17, 22, .55); }
+.mcl-dlg form { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); border-top: 5px solid var(--tt-ouro); }
+.mcl-dlg header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 22px 4px; }
+.mcl-dlg h2 { margin: 0; font: 800 22px/1.2 var(--tt-sans); }
+.mcl-dlg header p { margin: 4px 0 0; font-size: 13.5px; color: var(--tt-mudo); }
+.mcl-fechar { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--tt-linha); background: transparent; color: var(--tt-tx); cursor: pointer; }
+.mcl-corpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; padding: 14px 22px 18px; overflow: auto; }
+.mcl-corpo .largo { grid-column: 1 / -1; }
+.mcl-corpo .tt-campo > span i { margin-left: 4px; font-style: normal; font-weight: 500; opacity: .7; }
+.mcl-corpo .tt-campo input, .mcl-corpo .tt-campo textarea { color: var(--tt-tx); font-family: var(--tt-sans); }
+.mcl-corpo .tt-campo input.mcl-num { font: 700 17px var(--mono); font-variant-numeric: tabular-nums; }
+.mcl-corpo textarea { resize: vertical; }
+.mcl-dica { font-size: 12.5px; color: var(--tt-mudo); }
+.mcl-dica b { color: var(--tt-tx); }
+.mcl-progs { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.mcl-progs legend { margin-bottom: 6px; padding: 0; font-size: 13px; font-weight: 600; color: var(--tt-mudo); }
+.mcl-progs label { position: relative; display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--tt-linha); font: 600 14px/1 var(--tt-sans); cursor: pointer; user-select: none; }
+.mcl-progs label i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.mcl-progs input[type=radio] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.mcl-progs label:has(input:checked) { border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, var(--tt-card)); box-shadow: inset 0 0 0 1px var(--c); }
+.mcl-progs label:has(input:focus-visible) { outline: 2px solid var(--tt-ouro); outline-offset: 2px; }
+.mcl-outro { flex-basis: 100%; min-height: 42px; margin-top: 4px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--tt-linha); background: var(--tt-card); color: var(--tt-tx); font: 500 15px var(--tt-sans); }
+.mcl-outro:focus { outline: none; border-color: var(--tt-ouro); box-shadow: 0 0 0 3px rgba(242, 183, 5, .2); }
+.mcl-dlg .tt-msg { margin: 0 22px 12px; }
+.mcl-dlg footer { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 14px 22px 18px; border-top: 1px solid var(--tt-linha); }
+.mcl-esp { flex: 1; }
+
+@media (max-width: 760px) {
+  .mil-nav { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .mil-nav a { padding: 0 8px; gap: 6px; font-size: 13.5px; }
+  .mcl .mil-topo { flex-wrap: wrap; align-items: flex-start; }
+  .mcl-novo { width: 100%; }
+  .mcl-mes { width: 100%; justify-content: space-between; }
+  .mcl-mes h2 { min-width: 0; flex: 1; font-size: 19px; }
+  .mcl-mes button.mcl-hoje { order: 4; margin: 0 auto; }
+  .mcl-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .mcl-resumo .mcl-total { grid-column: 1 / -1; }
+  .mcl-resumo .mil-recorde { min-height: 112px; padding: 14px; }
+  .mcl-resumo .mil-recorde b { font-size: 24px; }
+  .mcl-resumo .mil-recorde em { font-size: 11px; white-space: nowrap; }
+  .mcl-barra .pro-barra-dir { flex-wrap: nowrap; }
+  .mcl-barra .pro-busca { flex: 1; width: auto; min-width: 0; }
+  .mcl-cab { display: none; }
+  .mcl-item {
+    grid-template-columns: 48px minmax(0, 1fr) auto; grid-template-areas: "data quem qtd" "data prog valor" "data obs editar";
+    gap: 6px 12px; padding: 12px 14px;
+  }
+  .mcl-data { grid-area: data; align-self: start; width: 48px; }
+  .mcl-quem { grid-area: quem; } .mcl-prog { grid-area: prog; } .mcl-qtd { grid-area: qtd; } .mcl-valor { grid-area: valor; }
+  .mcl-editar { grid-area: editar; } .mcl-editar.vazio { display: none; }
+  .mcl-obs { grid-area: obs; margin: 0; }
+  .mcl-qtd b { font-size: 17px; }
+  .mcl-corpo { grid-template-columns: minmax(0, 1fr); padding: 12px 16px 16px; }
+  .mcl-dlg header { padding: 16px 16px 2px; }
+  .mcl-dlg footer { padding: 12px 16px 16px; }
+  .mcl-dlg .tt-msg { margin: 0 16px 10px; }
+}

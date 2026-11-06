@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { navegador, pagina, entrar, foto, checar, totalFalhas, BASE, OUT, listarAdmin, gravarAdmin } from "./util.mjs";
-import { subirServidor } from "./promo-servidor.mjs";
+import { subirServidor, ATE } from "./promo-servidor.mjs";
 
 const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const pins = JSON.parse(fs.readFileSync(path.join(OUT, "pins.json"), "utf8"));
@@ -119,7 +119,7 @@ checar((await p.textContent(".mil-topo h1")).trim() === "Compra de milhas", "tí
 const cartoes = await p.$$eval(".mil-cartao h3", (h) => h.map((x) => x.textContent));
 checar(cartoes.length === 5, "5 ofertas de compra: " + cartoes.length);
 checar(!cartoes.some((t) => /AAdvantage|80% de bônus|Esfera dá|mil milhas o trecho|Clube Smiles/.test(t)), "fora: programa estrangeiro, bônus de transferência, resgate e clube");
-checar((await p.textContent('.mil-cartao:has-text("Latam Pass: compre pontos") .situ')).trim() === "Até 05/11", "prazo 'até 05/11' lido do título");
+checar((await p.textContent('.mil-cartao:has-text("Latam Pass: compre pontos") .situ')).trim() === "Até " + ATE, "prazo 'até " + ATE + "' lido do título");
 checar((await p.textContent('.mil-cartao:has-text("Livelo: compre pontos") .situ')).trim() === "Só hoje", "Livelo: só hoje");
 checar((await p.textContent('.mil-cartao:has-text("milheiro a partir") .num')).includes("R$ 15,46o milheiro"), "milheiro em destaque no cartão");
 await p.click('.mil-progs button:has-text("Smiles")');
